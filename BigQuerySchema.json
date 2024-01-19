@@ -1,0 +1,64 @@
+[
+  {
+    "name": "id",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "type",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "data",
+    "type": "RECORD",
+    "mode": "NULLABLE",
+    "fields": [
+      {
+        "name": "AddedDate",
+        "type": "STRING",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "DataClasses",
+        "type": "STRING",
+        "mode": "REPEATED"
+      },
+      {
+        "name": "FilePath",
+        "type": "STRING",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "LeakURL",
+        "type": "STRING",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "Line",
+        "type": "STRING",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "LineNumber",
+        "type": "INTEGER",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "Offender",
+        "type": "STRING",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "OffenderEntropy",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "Rule",
+        "type": "STRING",
+        "mode": "NULLABLE"
+      }
+    ]
+  }
+]
