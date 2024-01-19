@@ -125,7 +125,7 @@ func Scan(ctx context.Context, bucketName, objectName string, object *storage.Ob
 					DataClasses:     rule.Tags,
 					FilePath:        objectName,
 					LeakURL:         leakURL(bucketName, objectName, lineNumber),
-					Line:            "",
+					Line:            line,
 					LineNumber:      lineNumber,
 					Offender:        offenderString,
 					OffenderEntropy: offender.EntropyLevel,
