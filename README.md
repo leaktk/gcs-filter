@@ -2,6 +2,17 @@
 
 Filter objects containing leaks from Google Cloud Storage
 
+## Redaction
+
+Only rules tagged `type:secret` and not `group:leaktk-testing` will result
+in objects being redacted. 
+
+To put the function in "testing mode", make sure all of the rules provided
+are tagged with `group:leaktk-testing`.
+
+If a rule does trigger a redaction, the whole object will be replaced
+with a message containing a notice that the object was removed and why.
+
 ## Settings
 
 The settings for this project are passed in via env vars during `make deploy`.
