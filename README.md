@@ -5,7 +5,7 @@ Filter objects containing leaks from Google Cloud Storage
 ## Redaction
 
 Only rules tagged `type:secret` and not `group:leaktk-testing` will result
-in objects being redacted. 
+in objects being redacted.
 
 To put the function in "testing mode", make sure all of the rules provided
 are tagged with `group:leaktk-testing`.
@@ -34,7 +34,7 @@ When creating the reporting.toml through the `LEAK_REPORTER_CONFIG` variable,
 it should look something like this:
 
 ```toml
-# Note you set kinds (pluarl) instead of kind to get a multi reporter
+# Note you set kinds (plural) instead of kind to get a multi reporter
 kinds=["Logger", "Splunk", "BigQuery"]
 
 [Splunk]
