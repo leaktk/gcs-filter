@@ -14,15 +14,24 @@
 # EXCLUDE_LIST_URL - A list regexes to ignore in file paths
 # EXCLUDE_LIST_CURL_FLAGS - Flags for providing auth to the exclude list server
 # LEAKTK_PATTERN_SERVER_URL - The URL for the pattern server
+# LEAKTK_GCS_FILTER_ALLOW_REMOVE - allow the function to remove files with leaks
+#                                  (default: true)
 # LEAK_REPORTER_CONFIG - The config for where reports of leaks should go.
-#                         The supported values are currently Splunk, BigQuery
-#                         and Logger. Some take extra config that can be sceen
-#                         from the src/config/config.go structs.
+#                        The supported values are currently Splunk, BigQuery
+#                        and Logger. Some take extra config that can be seen
+#                        from the src/config/config.go structs.
 
 define DEFAULT_LEAK_REPORTER_CONFIG
 kind="Logger"
 endef
 
+# Set env vars for the deploy
+LEAKTK_GCS_FILTER_ALLOW_REMOVE ?= true
+
+# Collect the env vars to pass to the gcloud command
+ENV_VARS := LEAKTK_GCS_FILTER_ALLOW_REMOVE=$(LEAKTK_GCS_FILTER_ALLOW_REMOVE)
+
+# Settings
 GCF_CONCURRENCY ?= 10
 GCF_CPU ?= 2
 GCF_MEMORY ?= 256Mi
@@ -32,6 +41,7 @@ GCF_DEPLOY_FLAGS += --source=dist --entry-point=AnalyzeObject
 GCF_DEPLOY_FLAGS += --trigger-bucket=$(GCS_BUCKET) --project=$(GCF_PROJECT)
 GCF_DEPLOY_FLAGS += --cpu=$(GCF_CPU) --memory=$(GCF_MEMORY)
 GCF_DEPLOY_FLAGS += --concurrency=$(GCF_CONCURRENCY) --timeout=$(GCF_TIMEOUT)
+GCF_DEPLOY_FLAGS += --set-env-vars=$(ENV_VARS)
 LEAKTK_PATTERN_SERVER_URL ?= https://raw.githubusercontent.com/leaktk/patterns/main/target
 LEAK_REPORTER_CONFIG ?= $(DEFAULT_LEAK_REPORTER_CONFIG)
 

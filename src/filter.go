@@ -3,6 +3,7 @@ package filter
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"cloud.google.com/go/storage"
 	"github.com/GoogleCloudPlatform/functions-framework-go/functions"
@@ -22,7 +23,15 @@ const removalNotice = "This file contained potentially sensitive information and
 var rptr reporter.Reporter
 var storageClient *storage.Client
 
+// Feature flags - see the init section below for what they're set to
+var allowRemoveObjectContent bool
+
 func init() {
+	// Set feature flags
+	// allowRemoveObjectContent (default: true) - a flag for enabling or disabling removing content
+	allowRemoveObjectContent = os.Getenv("LEAKTK_GCS_FILTER_ALLOW_REMOVE") != "false"
+
+	// Setup the reporter
 	ctx := context.Background()
 
 	reporterConfig, err := config.NewReporterConfig()
@@ -36,11 +45,13 @@ func init() {
 		}
 	}
 
+	// Setup the storage client
 	storageClient, err = storage.NewClient(ctx)
 	if err != nil {
 		logging.Fatal("storage.NewClient: %w", err)
 	}
 
+	// Register the entrypoint
 	functions.CloudEvent("AnalyzeObject", analyzeObject)
 }
 
@@ -96,7 +107,7 @@ func analyzeObject(ctx context.Context, e event.Event) error {
 	}
 	endTimer()
 
-	if removeObjectContent {
+	if allowRemoveObjectContent && removeObjectContent {
 		endTimer = perf.Timer("RemoveObjectContent")
 		logging.Info("removing object content: object_name=\"%v\"", objectName)
 
