@@ -1,6 +1,6 @@
 module github.com/leaktk/gcs-filter
 
-go 1.21.5
+go 1.21
 
 require (
 	cloud.google.com/go/bigquery v1.56.0
