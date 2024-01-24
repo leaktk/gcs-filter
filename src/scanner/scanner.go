@@ -34,6 +34,7 @@ func Scan(ctx context.Context, cfg *gitleaksconfig.Config, bucketName, objectNam
 	var leaks []Leak
 
 	if cfg.Allowlist.PathAllowed(objectName) {
+		logging.Info("skipping because path allowed: object_name=\"%v\"", objectName)
 		return leaks, nil
 	}
 

@@ -2,95 +2,114 @@
 
 Filter objects containing leaks from Google Cloud Storage
 
-## Redaction
-
-Only rules tagged `type:secret` and not `group:leaktk-testing` will result
-in objects being redacted.
-
-To put the function in "testing mode", make sure all of the rules provided
-are tagged with `group:leaktk-testing`.
-
-If a rule does trigger a redaction, the whole object will be replaced
-with a message containing a notice that the object was removed and why.
-
 ## Settings
 
-The settings for this project are passed in via env vars during `make deploy`.
-See top of the the [Makefile](./Makefile) for a description of those env vars.
+All settings mentioned in the different sections below are environment
+variables and should be exported during a `make deploy`.
 
-## Reporters
+### Deployment
 
-Reporters report links to some external source. The different supported types
+In addition to the other component env vars defined below, the following
+settings need to be defined for a deployment:
+
+- `LEAKTK_GCS_FILTER_PROJECT`: is the project the function will be deployed to
+
+- `LEAKTK_GCS_FILTER_REGION`: is the region the function will be deployed to
+
+- `LEAKTK_GCS_FILTER_TRIGGER_BUCKET`: is the bucket that the function will
+  monitor
+
+And these settings are optional (see the [Makefile](./Makefile) for defaults):
+
+- `LEAKTK_GCS_FILTER_CONCURRENCY`: is how many connections a single instance
+  should allow at once
+
+- `LEAKTK_GCS_FILTER_CPU`: sets the CPU limits for the function
+
+- `LEAKTK_GCS_FILTER_MEMORY`: sets the memory limits for the function
+
+- `LEAKTK_GCS_FILTER_TIMEOUT`: sets runtime limits for the function
+
+- `LEAKTK_PATTERN_SERVER_URL`: is the base url for pattern server (that is it
+  the url without `/patterns/gitleaks/7.6.1`)
+
+- `LEAKTK_PATTERN_SERVER_CURL_FLAGS`: are curl flags for making requests to the
+  pattern server
+
+### Redaction
+
+Only rules tagged `type:secret` and not `group:leaktk-testing` are in scope for
+redaction. If the redactor is enabled, the full contents will be removed from
+the bucket.
+
+Redactor settings:
+
+- `LEAKTK_GCS_FILTER_REDACTOR_ENABLED` (default: `true`): turns redaction on or
+  off
+
+- `LEAKTK_GCS_FILTER_REDACTOR_QUARANTINE` (default: `false`): turns on backing
+  up files containing leaks to the the bucket defined by
+  `LEAKTK_GCS_FILTER_REDACTOR_QUARANTINE_BUCKET_NAME`
+
+Required settings if quarantine is enabled:
+
+- `LEAKTK_GCS_FILTER_REDACTOR_QUARANTINE_BUCKET_NAME`: This defines the bucket
+  that files will be copied to if `LEAKTK_GCS_FILTER_REDACTOR_QUARANTINE` is
+  enabled
+
+### Reporters
+
+Reporters report leaks to some external source. The different supported types
 of reporters are listed below.
 
-The `LEAK_REPORTER_CONFIG` env variable can be set during `make deploy` to
-write the reporter.toml to the right location during the deploy process.
+Required reporter settings:
 
-### Multi
+- `LEAKTK_GCS_FILTER_REPORTER_KINDS`: is a comma separated list of reporter
+  types
 
-This is for combining any of the other log types below.
-
-When creating the reporting.toml through the `LEAK_REPORTER_CONFIG` variable,
-it should look something like this:
-
-```toml
-# Note you set kinds (plural) instead of kind to get a multi reporter
-kinds=["Logger", "Splunk", "BigQuery"]
-
-[Splunk]
-...
-
-[BigQuery]
-...
-```
-
-You can swap the order or leave any kind out you want.
-
-### Logger
+#### Logger
 
 The logger reporter simply logs leaks using the function's logger.
 
-When creating the reporting.toml through the `LEAK_REPORTER_CONFIG` variable,
-it should look something like this:
-
-```toml
-kind="Logger"
-```
-
-This is also the default if `LEAK_REPORTER_CONFIG` isn't set.
-
-### Splunk
+#### Splunk
 
 This is for posting to a Splunk HTTP Event Collector.
 
-When creating the reporting.toml through the `LEAK_REPORTER_CONFIG` variable,
-it should look something like this:
+Required Splunk reporter settings (if the reporter is enabled):
 
-```toml
-kind="Splunk"
+- `LEAKTK_GCS_FILTER_SPLUNK_REPORTER_COLLECTOR`: is the URL for the Splunk HTTP
+  event collector
 
-[Splunk]
-collector="https://replace_me_with_the_correct_collector_url"
-host="replace_me_with_the_host_name_to_report"
-index="replace_me_with_the_index_you_want_to_use"
-source="leaktk-gcs-filter"
-sourcetype="_json"
-token="replace_me_the_splunk_hec_token"
-```
+- `LEAKTK_GCS_FILTER_SPLUNK_REPORTER_HOST`: sets the host to report in the
+  events (`leaktk-gcs-filter.$bucket.$region.$project` provides a fairly
+  descriptive hostname)
 
-### BigQuery
+- `LEAKTK_GCS_FILTER_SPLUNK_REPORTER_INDEX`: sets the index the events should
+  be stored under
+
+- `LEAKTK_GCS_FILTER_SPLUNK_REPORTER_SOURCE`: sets the source you want to use
+  for the events (`leaktk-gcs-filter` is a good value here)
+
+- `LEAKTK_GCS_FILTER_SPLUNK_REPORTER_SOURCETYPE`: sets the sourcetype (`_json`
+  is a good default value for this)
+
+- `LEAKTK_GCS_FILTER_SPLUNK_REPORTER_TOKEN`: sets the token used for
+  authenticating requests to the Splunk HEC
+
+#### BigQuery
+
+This saves results in a BigQuery database.
 
 The project, dataset, and table are not created automatically. They must be
 created using [this schema](./BigQuerySchema.json).
 
-When creating the reporting.toml through the `LEAK_REPORTER_CONFIG` variable,
-it should look something like this:
+Required BigQuery reporter settings (if the reporter is enabled):
 
-```toml
-kind="BigQuery"
+- `LEAKTK_GCS_FILTER_BIGQUERY_REPORTER_PROJECT_ID`: should be the project the
+  BigQuery DB is in
 
-[BigQuery]
-project_id="replace-with-project-id"
-dataset_id="replace_with_dataset_id"
-table_id="replace_with_table_id"
-```
+- `LEAKTK_GCS_FILTER_BIGQUERY_REPORTER_DATASET_ID`: should be the id of the
+  BigQuery dataset where the potential leaks are stored
+
+- `LEAKTK_GCS_FILTER_BIGQUERY_REPORTER_TABLE_ID`: should be the table id in the
+  dataset where the potential leaks are stored

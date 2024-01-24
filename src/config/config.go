@@ -5,7 +5,6 @@ import (
 	_ "embed"
 	"errors"
 	"os"
-	"regexp"
 	"strings"
 
 	"github.com/BurntSushi/toml"
@@ -46,7 +45,6 @@ type Redactor struct {
 
 // Config contains all of the config for the app
 type Config struct {
-	ExcludeList []*regexp.Regexp
 	Gitleaks    *gitleaksconfig.Config
 	Redactor    *Redactor
 	Reporter    *Reporter
@@ -54,31 +52,6 @@ type Config struct {
 
 //go:embed gitleaks.toml
 var rawGitleaks string
-
-//go:embed exclude-list.txt
-var rawExcludeList string
-
-func newExcludeList() ([]*regexp.Regexp, error) {
-	var excludeList []*regexp.Regexp
-
-	for _, item := range strings.Split(strings.ReplaceAll(rawExcludeList, "\r\n", "\n"), "\n") {
-		item = strings.TrimSpace(item)
-
-		if len(item) == 0 || strings.HasPrefix(item, "#") {
-			continue
-		}
-
-		regex, err := regexp.Compile(item)
-
-		if err != nil {
-			return nil, err
-		}
-
-		excludeList = append(excludeList, regex)
-	}
-
-	return excludeList, nil
-}
 
 func newGitleaksConfig() (*gitleaksconfig.Config, error) {
 	var cfg gitleaksconfig.Config
@@ -103,11 +76,11 @@ func newRedactorConfig() (*Redactor, error) {
 
 	if r.Quarantine {
 		if !r.Enabled {
-			return nil, errors.New("LEAKTK_GCS_FILTER_REDACT_LEAKS must be set to true if LEAKTK_GCS_FILTER_QUARANTINE_LEAKS is true")
+			return nil, errors.New("LEAKTK_GCS_FILTER_REDACTOR_ENABLED must be set to true if LEAKTK_GCS_FILTER_REDACTOR_QUARANTINE is true")
 		}
 
 		if len(r.QuarantineBucketName) == 0 {
-			return nil, errors.New("LEAKTK_GCS_FILTER_QUARANTINE_BUCKET_NAME must be set if LEAKTK_GCS_FILTER_QUARANTINE_LEAKS is true")
+			return nil, errors.New("LEAKTK_GCS_FILTER_REDACTOR_QUARANTINE_BUCKET_NAME must be set if LEAKTK_GCS_FILTER_REDACTOR_QUARANTINE is true")
 		}
 	}
 
@@ -148,11 +121,6 @@ func newReporterConfig() (*Reporter, error) {
 
 // NewConfig loads the config for the app from memory and env vars
 func NewConfig() (*Config, error) {
-	excludeList, err := newExcludeList()
-	if err != nil {
-		return nil, err
-	}
-
 	gitleaksConfig, err := newGitleaksConfig()
 	if err != nil {
 		return nil, err
@@ -164,7 +132,6 @@ func NewConfig() (*Config, error) {
 	}
 
 	return &Config{
-		ExcludeList: excludeList,
 		Gitleaks:    gitleaksConfig,
 		Redactor:    redactorConfig,
 	}, nil

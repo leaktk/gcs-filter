@@ -54,21 +54,11 @@ func init() {
 	functions.CloudEvent("AnalyzeObject", analyzeObject)
 }
 
-func pathExcluded(filePath string) bool {
-	for _, re := range cfg.ExcludeList {
-		if re.MatchString(filePath) {
-			return true
-		}
-	}
-
-	return false
-}
-
 func analyzeObject(ctx context.Context, e event.Event) error {
 	defer perf.Timer("AnalyzeObject")()
 	var data storagedata.StorageObjectData
 
-	endTimer := perf.Timer("UnmarshalAndExcludeByPath")
+	endTimer := perf.Timer("Unmarshal")
 	if err := protojson.Unmarshal(e.Data(), &data); err != nil {
 		return fmt.Errorf("protojson.Unmarshal: %w", err)
 	}
@@ -82,15 +72,10 @@ func analyzeObject(ctx context.Context, e event.Event) error {
 	if objectName == "" {
 		return fmt.Errorf("empty object name")
 	}
-
-	logging.Info("starting analysis: object_name=\"%v\"", objectName)
-	if pathExcluded(objectName) {
-		logging.Info("skipping because path excluded: object_name=\"%v\"", objectName)
-		return nil
-	}
 	endTimer()
 
 	endTimer = perf.Timer("ScanObject")
+	logging.Info("starting analysis: object_name=\"%v\"", objectName)
 	object := storageClient.Bucket(bucketName).Object(objectName)
 	leaks, err := scanner.Scan(ctx, cfg.Gitleaks, bucketName, objectName, object)
 	if err != nil {
@@ -98,6 +83,10 @@ func analyzeObject(ctx context.Context, e event.Event) error {
 	}
 
 	logging.Info("scan details: leak_count=%d object_name=\"%v\"", len(leaks), objectName)
+  if len(leaks) == 0 {
+    // nothing else to do here
+    return nil;
+  }
 
 	// The iteration is backwards so that the leaks are reported in the right
 	// order via defer.
