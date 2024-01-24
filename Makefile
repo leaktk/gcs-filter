@@ -86,5 +86,7 @@ deploy: dist
 	cd dist
 	gcloud functions deploy leaktk-gcs-filter $(GCF_DEPLOY_FLAGS)
 
-unittest: dist
+unittest: clean dist
 	cd dist && go test
+
+test: lint unittest

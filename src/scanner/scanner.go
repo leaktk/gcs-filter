@@ -11,26 +11,10 @@ import (
 	"cloud.google.com/go/storage"
 
 	gitleaksconfig "github.com/leaktk/gitleaks7/v2/config"
-
-	"github.com/leaktk/gcs-filter/config"
-	"github.com/leaktk/gcs-filter/logging"
 )
 
 const defaultLineNumber = 1
 const bufSize = 256 * 1024
-
-var cfg gitleaksconfig.Config
-
-func init() {
-	// Load the config once so that a warmed up version of this function
-	// doesn't have to keep reloading the config
-	var err error
-	cfg, err = config.NewConfig()
-
-	if err != nil {
-		logging.Fatal("config.NewConfig: %w", err)
-	}
-}
 
 func leakURL(bucketName, objectName string, lineNumber int) string {
 	return fmt.Sprintf("gs://%v/%v#L%d", bucketName, objectName, lineNumber)
@@ -46,7 +30,7 @@ func now() string {
 
 // Scan implements a subset of a no git scan to handle an object passed in
 // Source: https://github.com/leaktk/gitleaks7/blob/main/scan/nogit.go
-func Scan(ctx context.Context, bucketName, objectName string, object *storage.ObjectHandle) ([]Leak, error) {
+func Scan(ctx context.Context, cfg *gitleaksconfig.Config, bucketName, objectName string, object *storage.ObjectHandle) ([]Leak, error) {
 	var leaks []Leak
 
 	if cfg.Allowlist.PathAllowed(objectName) {

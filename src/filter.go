@@ -3,7 +3,6 @@ package filter
 import (
 	"context"
 	"fmt"
-	"os"
 
 	"cloud.google.com/go/storage"
 	"github.com/GoogleCloudPlatform/functions-framework-go/functions"
@@ -14,35 +13,32 @@ import (
 	"github.com/leaktk/gcs-filter/config"
 	"github.com/leaktk/gcs-filter/logging"
 	"github.com/leaktk/gcs-filter/perf"
+	"github.com/leaktk/gcs-filter/redactor"
 	"github.com/leaktk/gcs-filter/reporter"
 	"github.com/leaktk/gcs-filter/scanner"
 )
 
-const removalNotice = "This file contained potentially sensitive information and has been removed."
-
-var rptr reporter.Reporter
+var leakReporter reporter.Reporter
 var storageClient *storage.Client
-
-// Feature flags - see the init section below for what they're set to
-var allowRemoveObjectContent bool
+var leakRedactor *redactor.Redactor
+var cfg *config.Config
 
 func init() {
-	// Set feature flags
-	// allowRemoveObjectContent (default: true) - a flag for enabling or disabling removing content
-	allowRemoveObjectContent = os.Getenv("LEAKTK_GCS_FILTER_ALLOW_REMOVE") != "false"
+	var err error
 
-	// Setup the reporter
+	// Load the config
+	cfg, err = config.NewConfig()
+	if err != nil {
+		logging.Fatal("config.NewConfig: %s", err.Error())
+	}
+
+	// Create a context for services to use
 	ctx := context.Background()
 
-	reporterConfig, err := config.NewReporterConfig()
+	// Setup the reporter
+	leakReporter, err = reporter.NewReporter(ctx, cfg.Reporter)
 	if err != nil {
-		logging.Error("config.NewReporterConfig: %w", err)
-	} else {
-		rptr, err = reporter.NewReporter(ctx, &reporterConfig)
-
-		if err != nil {
-			logging.Fatal("reporter.NewReporter: %w", err)
-		}
+		logging.Fatal("reporter.NewReporter: %w", err)
 	}
 
 	// Setup the storage client
@@ -51,8 +47,21 @@ func init() {
 		logging.Fatal("storage.NewClient: %w", err)
 	}
 
+	// Setup the redactor
+	leakRedactor = redactor.NewRedactor(cfg.Redactor, storageClient)
+
 	// Register the entrypoint
 	functions.CloudEvent("AnalyzeObject", analyzeObject)
+}
+
+func pathExcluded(filePath string) bool {
+	for _, re := range cfg.ExcludeList {
+		if re.MatchString(filePath) {
+			return true
+		}
+	}
+
+	return false
 }
 
 func analyzeObject(ctx context.Context, e event.Event) error {
@@ -75,7 +84,7 @@ func analyzeObject(ctx context.Context, e event.Event) error {
 	}
 
 	logging.Info("starting analysis: object_name=\"%v\"", objectName)
-	if config.PathExcluded(objectName) {
+	if pathExcluded(objectName) {
 		logging.Info("skipping because path excluded: object_name=\"%v\"", objectName)
 		return nil
 	}
@@ -83,7 +92,7 @@ func analyzeObject(ctx context.Context, e event.Event) error {
 
 	endTimer = perf.Timer("ScanObject")
 	object := storageClient.Bucket(bucketName).Object(objectName)
-	leaks, err := scanner.Scan(ctx, bucketName, objectName, object)
+	leaks, err := scanner.Scan(ctx, cfg.Gitleaks, bucketName, objectName, object)
 	if err != nil {
 		logging.Error("scanner.Scan: %w", err)
 	}
@@ -92,43 +101,23 @@ func analyzeObject(ctx context.Context, e event.Event) error {
 
 	// The iteration is backwards so that the leaks are reported in the right
 	// order via defer.
-	removeObjectContent := false
+	leakFound := false
 	for i := len(leaks) - 1; i >= 0; i-- {
 		leak := &leaks[i]
 
 		// Defer is used so that we don't have to iterate through the leaks again
 		// at the end or handle getting to the end in different error cases
 		// first.
-		defer rptr.Report(leak)
+		defer leakReporter.Report(leak)
 
-		if !removeObjectContent && leak.IsProductionSecretRule() {
-			removeObjectContent = true
+		if !leakFound && leak.IsProductionSecretRule() {
+			leakFound = true
 		}
 	}
 	endTimer()
 
-	if allowRemoveObjectContent && removeObjectContent {
-		endTimer = perf.Timer("RemoveObjectContent")
-		logging.Info("removing object content: object_name=\"%v\"", objectName)
-
-		objectWriter := object.NewWriter(ctx)
-		objectWriter.ContentType = "text/plain"
-		// Close not deferred because we want to know if it errors out after
-		// a successful write
-
-		_, err = objectWriter.Write([]byte(removalNotice))
-		if err != nil {
-			objectWriter.Close()
-			return fmt.Errorf("objectWriter.Write: %w", err)
-		}
-
-		err = objectWriter.Close()
-		if err != nil {
-			return fmt.Errorf("objectWriter.Close: %w", err)
-		}
-
-		logging.Info("object content removed: object_name=\"%v\"", objectName)
-		endTimer()
+	if leakRedactor.Enabled && leakFound {
+		leakRedactor.Redact(ctx, objectName, object)
 	}
 
 	return nil
