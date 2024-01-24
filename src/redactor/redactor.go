@@ -69,6 +69,8 @@ func (r *Redactor) Redact(ctx context.Context, objectName string, object *storag
 }
 
 func (r *Redactor) copyToQuarantineBucket(ctx context.Context, objectName string, src *storage.ObjectHandle) error {
+	logging.Info("quarantining object: object_name=\"%v\"", objectName)
+
 	dest := r.quarantineBucket.Object(objectName)
 	// Don't write to the object if it already exists
 	dest.If(storage.Conditions{DoesNotExist: true})
