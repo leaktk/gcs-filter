@@ -25,7 +25,7 @@ dist:
 	cp -r src dist
 	curl --fail $(LEAKTK_PATTERN_SERVER_CURL_FLAGS) \
 		'$(LEAKTK_PATTERN_SERVER_URL)/patterns/gitleaks/7.6.1' \
-		| grep -vE '^\s*(#|$$)' > '$@'
+		| grep -vE '^\s*(#|$$)' > 'dist/config/gitleaks.toml'
 
 .PHONY: format
 format:

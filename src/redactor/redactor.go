@@ -1,7 +1,7 @@
 package redactor
 
 import (
-  "context"
+	"context"
 	"errors"
 	"fmt"
 
@@ -33,7 +33,7 @@ func NewRedactor(rc *config.Redactor, storageClient *storage.Client) *Redactor {
 // Redact removes the content of the object if the redactor is enabled and if
 // quarantine is enabled, the object is first copied to the quarantine bucket.
 func (r *Redactor) Redact(ctx context.Context, objectName string, object *storage.ObjectHandle) error {
-  endTimer := perf.Timer("RedactObject")
+	endTimer := perf.Timer("RedactObject")
 	// Added here for safey in case the conditional in the other code is
 	// removed by mistake
 	if !r.Enabled {
@@ -65,7 +65,7 @@ func (r *Redactor) Redact(ctx context.Context, objectName string, object *storag
 
 	logging.Info("object content removed: object_name=\"%v\"", objectName)
 	endTimer()
-  return nil
+	return nil
 }
 
 func (r *Redactor) copyToQuarantineBucket(ctx context.Context, objectName string, src *storage.ObjectHandle) error {

@@ -45,9 +45,9 @@ type Redactor struct {
 
 // Config contains all of the config for the app
 type Config struct {
-	Gitleaks    *gitleaksconfig.Config
-	Redactor    *Redactor
-	Reporter    *Reporter
+	Gitleaks *gitleaksconfig.Config
+	Redactor *Redactor
+	Reporter *Reporter
 }
 
 //go:embed gitleaks.toml
@@ -64,7 +64,7 @@ func newGitleaksConfig() (*gitleaksconfig.Config, error) {
 	}
 
 	cfg, err = tomlLoader.Parse()
-  return &cfg, err
+	return &cfg, err
 }
 
 func newRedactorConfig() (*Redactor, error) {
@@ -132,7 +132,7 @@ func NewConfig() (*Config, error) {
 	}
 
 	return &Config{
-		Gitleaks:    gitleaksConfig,
-		Redactor:    redactorConfig,
+		Gitleaks: gitleaksConfig,
+		Redactor: redactorConfig,
 	}, nil
 }

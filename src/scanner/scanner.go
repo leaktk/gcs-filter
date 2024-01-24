@@ -11,6 +11,8 @@ import (
 	"cloud.google.com/go/storage"
 
 	gitleaksconfig "github.com/leaktk/gitleaks7/v2/config"
+
+	"github.com/leaktk/gcs-filter/logging"
 )
 
 const defaultLineNumber = 1

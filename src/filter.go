@@ -83,10 +83,10 @@ func analyzeObject(ctx context.Context, e event.Event) error {
 	}
 
 	logging.Info("scan details: leak_count=%d object_name=\"%v\"", len(leaks), objectName)
-  if len(leaks) == 0 {
-    // nothing else to do here
-    return nil;
-  }
+	if len(leaks) == 0 {
+		// nothing else to do here
+		return nil
+	}
 
 	// The iteration is backwards so that the leaks are reported in the right
 	// order via defer.
