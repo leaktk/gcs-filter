@@ -131,8 +131,14 @@ func NewConfig() (*Config, error) {
 		return nil, err
 	}
 
+	reporterConfig, err := newReporterConfig()
+	if err != nil {
+		return nil, err
+	}
+
 	return &Config{
 		Gitleaks: gitleaksConfig,
 		Redactor: redactorConfig,
+		Reporter: reporterConfig,
 	}, nil
 }
