@@ -106,7 +106,11 @@ func analyzeObject(ctx context.Context, e event.Event) error {
 	endTimer()
 
 	if leakRedactor.Enabled && leakFound {
-		leakRedactor.Redact(ctx, objectName, object)
+		err = leakRedactor.Redact(ctx, objectName, object)
+
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
