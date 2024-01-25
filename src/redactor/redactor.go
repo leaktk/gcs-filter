@@ -12,7 +12,7 @@ import (
 	"github.com/leaktk/gcs-filter/perf"
 )
 
-const notice = "This file contained potentially sensitive information and has been removed."
+const notice = "This file contained potentially sensitive information and has been removed.\n"
 
 // Redactor removes objects from the bucket and optionally quarantines them
 type Redactor struct {
