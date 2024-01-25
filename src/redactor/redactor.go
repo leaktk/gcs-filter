@@ -79,5 +79,6 @@ func (r *Redactor) copyToQuarantineBucket(ctx context.Context, objectName string
 		return fmt.Errorf("could not copy %q: %w", objectName, err)
 	}
 
+	logging.Info("object quarantined: object_name=\"%v\"", objectName)
 	return nil
 }
