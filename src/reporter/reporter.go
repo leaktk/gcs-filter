@@ -32,8 +32,8 @@ func reporterFromKind(ctx context.Context, kind string, rc *config.Reporter) (Re
 // NewReporter provides a concrete reporter struct based on the kind set in
 // the config
 func NewReporter(ctx context.Context, rc *config.Reporter) (Reporter, error) {
-	if len(rc.Kinds) == 0 {
-		return reporterFromKind(ctx, rc.Kind, rc)
+	if len(rc.Kinds) == 1 {
+		return reporterFromKind(ctx, rc.Kinds[0], rc)
 	}
 
 	var reporters []Reporter
