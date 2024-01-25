@@ -93,7 +93,7 @@ func newReporterConfig() (*Reporter, error) {
 	}
 
 	if len(r.Kinds) == 0 {
-		return nil, errors.New("LEAKTK_GCS_FILTER_REPORTER_KINDS must not be empty")
+		r.Kinds = []string{"Logger"}
 	}
 
 	for _, kind := range r.Kinds {

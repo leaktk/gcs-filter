@@ -62,10 +62,10 @@ Required settings if quarantine is enabled:
 Reporters report leaks to some external source. The different supported types
 of reporters are listed below.
 
-Required reporter settings:
+Reporter settings:
 
-- `LEAKTK_GCS_FILTER_REPORTER_KINDS`: is a comma separated list of reporter
-  types
+- `LEAKTK_GCS_FILTER_REPORTER_KINDS` (default: `"Logger"`): is a comma
+  separated list of reporter types
 
 #### Logger
 
