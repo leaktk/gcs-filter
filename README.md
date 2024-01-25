@@ -30,15 +30,15 @@ And these settings are optional (see the [Makefile](./Makefile) for defaults):
 
 - `LEAKTK_GCS_FILTER_TIMEOUT`: sets runtime limits for the function
 
-- `LEAKTK_PATTERN_SERVER_URL`: is the base url for pattern server (that is it
-  the url without `/patterns/gitleaks/7.6.1`)
+- `LEAKTK_PATTERN_SERVER_URL`: is the base url for pattern server
+  (`/patterns/gitleaks/7.6.1`, will be appended to it)
 
 - `LEAKTK_PATTERN_SERVER_CURL_FLAGS`: are curl flags for making requests to the
   pattern server
 
 ### Redaction
 
-Only rules tagged `type:secret` and not `group:leaktk-testing` are in scope for
+Only rules tagged `type:secret` and **not** `group:leaktk-testing` are in scope for
 redaction. If the redactor is enabled, the full contents will be removed from
 the bucket.
 
