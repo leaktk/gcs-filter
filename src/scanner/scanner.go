@@ -32,8 +32,8 @@ func now() string {
 
 // Scan implements a subset of a no git scan to handle an object passed in
 // Source: https://github.com/leaktk/gitleaks7/blob/main/scan/nogit.go
-func Scan(ctx context.Context, cfg *gitleaksconfig.Config, bucketName, objectName string, object *storage.ObjectHandle) ([]Leak, error) {
-	var leaks []Leak
+func Scan(ctx context.Context, cfg *gitleaksconfig.Config, bucketName, objectName string, object *storage.ObjectHandle) ([]*Leak, error) {
+	var leaks []*Leak
 
 	if cfg.Allowlist.PathAllowed(objectName) {
 		logging.Info("skipping because path allowed: object_name=\"%v\"", objectName)
@@ -61,7 +61,7 @@ func Scan(ctx context.Context, cfg *gitleaksconfig.Config, bucketName, objectNam
 				},
 			}
 
-			leaks = append(leaks, leak)
+			leaks = append(leaks, &leak)
 		}
 	}
 
@@ -120,7 +120,7 @@ func Scan(ctx context.Context, cfg *gitleaksconfig.Config, bucketName, objectNam
 				},
 			}
 
-			leaks = append(leaks, leak)
+			leaks = append(leaks, &leak)
 		}
 	}
 

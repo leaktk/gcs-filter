@@ -25,16 +25,20 @@ func NewLoggerReporter(_ context.Context, rc *config.Reporter) (*LoggerReporter,
 }
 
 // Report forwards the leak details
-func (r *LoggerReporter) Report(leak *scanner.Leak) {
+func (r *LoggerReporter) Report(leaks []*scanner.Leak) {
 	endTimer := perf.Timer("ReportToLogger")
-	data, err := json.Marshal(&leak)
 
-	if err != nil {
-		logging.Error("could not marshal leak result")
-		logging.Info("%w", leak)
-	} else {
-		logging.Info(string(data))
+	for _, leak := range leaks {
+		data, err := json.Marshal(leak)
+
+		if err != nil {
+			logging.Error("could not marshal leak result")
+			logging.Info("%w", leak)
+		} else {
+			logging.Info(string(data))
+		}
 	}
+
 	endTimer()
 }
 

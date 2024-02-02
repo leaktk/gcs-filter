@@ -88,19 +88,13 @@ func analyzeObject(ctx context.Context, e event.Event) error {
 		return nil
 	}
 
-	// The iteration is backwards so that the leaks are reported in the right
-	// order via defer.
+	defer leakReporter.Report(leaks)
+
 	leakFound := false
-	for i := len(leaks) - 1; i >= 0; i-- {
-		leak := &leaks[i]
-
-		// Defer is used so that we don't have to iterate through the leaks again
-		// at the end or handle getting to the end in different error cases
-		// first.
-		defer leakReporter.Report(leak)
-
+	for _, leak := range leaks {
 		if !leakFound && leak.IsProductionSecretRule() {
 			leakFound = true
+			break
 		}
 	}
 	endTimer()

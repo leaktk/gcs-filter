@@ -12,7 +12,7 @@ import (
 
 // Reporter provides an interface that other reporters can implement
 type Reporter interface {
-	Report(leak *scanner.Leak)
+	Report(leaks []*scanner.Leak)
 	io.Closer
 }
 

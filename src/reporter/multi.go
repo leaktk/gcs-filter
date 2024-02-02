@@ -6,8 +6,8 @@ import (
 	"github.com/leaktk/gcs-filter/scanner"
 )
 
-func wgReport(wg *sync.WaitGroup, r Reporter, leak *scanner.Leak) {
-	r.Report(leak)
+func wgReport(wg *sync.WaitGroup, r Reporter, leaks []*scanner.Leak) {
+	r.Report(leaks)
 	wg.Done()
 }
 
@@ -22,12 +22,12 @@ func NewMultiReporter(reporters []Reporter) (*MultiReporter, error) {
 }
 
 // Report forwards leaks to the reporters
-func (r *MultiReporter) Report(leak *scanner.Leak) {
+func (r *MultiReporter) Report(leaks []*scanner.Leak) {
 	var wg sync.WaitGroup
 
 	for _, r := range r.reporters {
 		wg.Add(1)
-		go wgReport(&wg, r, leak)
+		go wgReport(&wg, r, leaks)
 	}
 
 	wg.Wait()
