@@ -40,23 +40,30 @@ func NewSplunkReporter(_ context.Context, rc *config.Reporter) (*SplunkReporter,
 }
 
 // Report forwards leaks to Splunk
-func (r *SplunkReporter) Report(leak *scanner.Leak) {
+func (r *SplunkReporter) Report(leaks []*scanner.Leak) {
 	endTimer := perf.Timer("ReportToSplunk")
-	payload := splunkPayload{
-		Host:       r.config.Host,
-		Index:      r.config.Index,
-		Source:     r.config.Source,
-		Sourcetype: r.config.Sourcetype,
-		Event:      leak,
+	var events bytes.Buffer
+
+	for _, leak := range leaks {
+		payload := splunkPayload{
+			Host:       r.config.Host,
+			Index:      r.config.Index,
+			Source:     r.config.Source,
+			Sourcetype: r.config.Sourcetype,
+			Event:      leak,
+		}
+
+		body, err := json.Marshal(payload)
+		if err != nil {
+			logging.Error("json.Marshal: %w", err)
+			continue
+		}
+
+		events.Write(body)
+		events.WriteString("\n")
 	}
 
-	body, err := json.Marshal(payload)
-	if err != nil {
-		logging.Error("json.Marshal: %w", err)
-		return
-	}
-
-	req, err := http.NewRequest("POST", r.config.Collector, bytes.NewReader(body))
+	req, err := http.NewRequest("POST", r.config.Collector, bytes.NewReader(events.Bytes()))
 	if err != nil {
 		logging.Error("http.Request: %w", err)
 		return
