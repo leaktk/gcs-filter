@@ -32,12 +32,13 @@ func now() string {
 
 // Scan implements a subset of a no git scan to handle an object passed in
 // Source: https://github.com/leaktk/gitleaks7/blob/main/scan/nogit.go
-func Scan(ctx context.Context, cfg *gitleaksconfig.Config, bucketName, objectName string, object *storage.ObjectHandle) ([]*Leak, error) {
+func Scan(ctx context.Context, cfg *gitleaksconfig.Config, bucketName, objectName string, object *storage.ObjectHandle) ([]*Leak, int64, error) {
 	var leaks []*Leak
+	var generation int64
 
 	if cfg.Allowlist.PathAllowed(objectName) {
 		logging.Info("skipping because path allowed: object_name=\"%v\"", objectName)
-		return leaks, nil
+		return leaks, generation, nil
 	}
 
 	for _, rule := range cfg.Rules {
@@ -68,7 +69,7 @@ func Scan(ctx context.Context, cfg *gitleaksconfig.Config, bucketName, objectNam
 	objectReader, err := object.NewReader(ctx)
 
 	if err != nil {
-		return leaks, fmt.Errorf("object.NewReader: %w", err)
+		return leaks, generation, fmt.Errorf("object.NewReader: %w", err)
 	}
 
 	defer objectReader.Close()
@@ -124,5 +125,16 @@ func Scan(ctx context.Context, cfg *gitleaksconfig.Config, bucketName, objectNam
 		}
 	}
 
-	return leaks, scanner.Err()
+	// Retrieve the object generation from object attributes when len(leaks) > 0
+	// The generation is used when quarantining files to quarantine the generation
+	// of the file we scanned
+	if len(leaks) > 0 {
+		attrs, err := object.Attrs(ctx)
+		if err != nil {
+			return leaks, generation, fmt.Errorf("object.Attrs: %w", err)
+		}
+		generation = attrs.Generation
+	}
+
+	return leaks, generation, scanner.Err()
 }

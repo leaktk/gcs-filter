@@ -32,7 +32,7 @@ func NewRedactor(rc *config.Redactor, storageClient *storage.Client) *Redactor {
 
 // Redact removes the content of the object if the redactor is enabled and if
 // quarantine is enabled, the object is first copied to the quarantine bucket.
-func (r *Redactor) Redact(ctx context.Context, objectName string, object *storage.ObjectHandle) error {
+func (r *Redactor) Redact(ctx context.Context, objectName string, object *storage.ObjectHandle, generation int64) error {
 	endTimer := perf.Timer("RedactObject")
 	// Added here for safey in case the conditional in the other code is
 	// removed by mistake
@@ -41,7 +41,7 @@ func (r *Redactor) Redact(ctx context.Context, objectName string, object *storag
 	}
 
 	if r.quarantine {
-		if err := r.copyToQuarantineBucket(ctx, objectName, object); err != nil {
+		if err := r.copyToQuarantineBucket(ctx, objectName, object, generation); err != nil {
 			return err
 		}
 	}
@@ -68,14 +68,14 @@ func (r *Redactor) Redact(ctx context.Context, objectName string, object *storag
 	return nil
 }
 
-func (r *Redactor) copyToQuarantineBucket(ctx context.Context, objectName string, src *storage.ObjectHandle) error {
+func (r *Redactor) copyToQuarantineBucket(ctx context.Context, objectName string, src *storage.ObjectHandle, generation int64) error {
 	logging.Info("quarantining object: object_name=\"%v\"", objectName)
 
 	dest := r.quarantineBucket.Object(objectName)
 	// Don't write to the object if it already exists
 	dest.If(storage.Conditions{DoesNotExist: true})
 
-	if _, err := dest.CopierFrom(src).Run(ctx); err != nil {
+	if _, err := dest.CopierFrom(src.Generation(generation)).Run(ctx); err != nil {
 		return fmt.Errorf("could not copy %q: %w", objectName, err)
 	}
 
