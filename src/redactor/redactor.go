@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"cloud.google.com/go/storage"
 
@@ -41,7 +42,9 @@ func (r *Redactor) Redact(ctx context.Context, objectName string, object *storag
 	}
 
 	if r.quarantine {
-		if err := r.copyToQuarantineBucket(ctx, objectName, object); err != nil {
+		copyCtx, cancel := context.WithTimeout(ctx, time.Second*10)
+		defer cancel()
+		if err := r.copyToQuarantineBucket(copyCtx, objectName, object); err != nil {
 			return err
 		}
 	}
@@ -75,8 +78,25 @@ func (r *Redactor) copyToQuarantineBucket(ctx context.Context, objectName string
 	// Don't write to the object if it already exists
 	dest.If(storage.Conditions{DoesNotExist: true})
 
-	if _, err := dest.CopierFrom(src).Run(ctx); err != nil {
+	copyComplete := false
+	copier := dest.CopierFrom(src)
+	copier.ProgressFunc = func(copiedBytes, totalBytes uint64) {
+		if copiedBytes == totalBytes {
+			copyComplete = true
+		}
+	}
+
+	if _, err := copier.Run(ctx); err != nil {
 		return fmt.Errorf("could not copy %q: %w", objectName, err)
+	}
+
+	for {
+		if copyComplete {
+			break
+		}
+		if ctx.Err() != nil {
+			return fmt.Errorf("copy failed %q: %w", objectName, ctx.Err())
+		}
 	}
 
 	logging.Info("object quarantined: object_name=\"%v\"", objectName)
