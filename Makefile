@@ -44,3 +44,6 @@ unittest: clean dist
 	cd dist && go test
 
 test: lint unittest
+
+security-report:
+	trivy fs --scanners vuln .
