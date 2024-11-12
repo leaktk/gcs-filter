@@ -1,6 +1,6 @@
 module github.com/leaktk/gcs-filter
 
-go 1.21
+go 1.22
 
 require (
 	cloud.google.com/go/bigquery v1.56.0
@@ -10,7 +10,7 @@ require (
 	github.com/cloudevents/sdk-go/v2 v2.15.2
 	github.com/googleapis/google-cloudevents-go v0.7.1
 	github.com/leaktk/gitleaks7/v2 v2.0.2
-	google.golang.org/protobuf v1.31.0
+	google.golang.org/protobuf v1.33.0
 )
 
 require (
