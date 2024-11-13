@@ -22,6 +22,7 @@ var leakReporter reporter.Reporter
 var storageClient *storage.Client
 var leakRedactor *redactor.Redactor
 var cfg *config.Config
+var unmarshaller protojson.UnmarshalOptions
 
 func init() {
 	var err error
@@ -50,6 +51,10 @@ func init() {
 	// Setup the redactor
 	leakRedactor = redactor.NewRedactor(cfg.Redactor, storageClient)
 
+	// Setup unmarshaller
+	unmarshaller.DiscardUnknown = true
+	unmarshaller.AllowPartial = true
+
 	// Register the entrypoint
 	functions.CloudEvent("AnalyzeObject", analyzeObject)
 }
@@ -59,7 +64,7 @@ func analyzeObject(ctx context.Context, e event.Event) error {
 	var data storagedata.StorageObjectData
 
 	endTimer := perf.Timer("Unmarshal")
-	if err := protojson.Unmarshal(e.Data(), &data); err != nil {
+	if err := unmarshaller.Unmarshal(e.Data(), &data); err != nil {
 		endTimer()
 		return fmt.Errorf("protojson.Unmarshal: %w", err)
 	}
