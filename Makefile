@@ -40,10 +40,17 @@ deploy: .env.yaml dist
 	cd dist
 	gcloud functions deploy leaktk-gcs-filter $(DEPLOY_FLAGS)
 
+.PHONY: unittest
 unittest: clean dist
 	cd dist && go test
 
+.PHONY: test
 test: lint unittest
 
+.PHONY: security-report
 security-report:
 	trivy fs --scanners vuln .
+
+.PHONY: update
+update:
+	cd src && go get -u ./... && go mod tidy
