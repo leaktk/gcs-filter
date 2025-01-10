@@ -1,0 +1,6 @@
+# This package doesn't leverage go-git code
+CVE-2025-21613
+# This package doesn't leverage go-git code
+CVE-2025-21614
+# This package doesn't leverage x/net/html
+CVE-2024-45338
