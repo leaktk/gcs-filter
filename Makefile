@@ -48,9 +48,12 @@ deploy: .env.yaml dist
 	cd dist
 	gcloud functions deploy leaktk-gcs-filter $(DEPLOY_FLAGS)
 
-.PHONY: test
-test: clean format vet lint dist
+.PHONY: unittest
+unittest: dist
 	cd dist && go test
+
+.PHONY: test
+test: clean format vet lint unittest
 
 .PHONY: security-report
 security-report:
