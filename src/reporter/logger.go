@@ -10,11 +10,6 @@ import (
 	"github.com/leaktk/gcs-filter/scanner"
 )
 
-type attr struct {
-	Name  string
-	Value string
-}
-
 // LoggerReporter reports leaks via the logger instead of another serivce
 type LoggerReporter struct {
 }
@@ -33,7 +28,7 @@ func (r *LoggerReporter) Report(leaks []*scanner.Leak) {
 
 		if err != nil {
 			logging.Error("could not marshal leak result")
-			logging.Info("%w", leak)
+			logging.Info("%v", leak)
 		} else {
 			logging.Info(string(data))
 		}

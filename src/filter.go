@@ -2,6 +2,7 @@ package filter
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"cloud.google.com/go/storage"
@@ -72,13 +73,13 @@ func analyzeObject(ctx context.Context, e event.Event) error {
 	bucketName := data.GetBucket()
 	if bucketName == "" {
 		endTimer()
-		return fmt.Errorf("empty object bucket")
+		return errors.New("empty object bucket")
 	}
 
 	objectName := data.GetName()
 	if objectName == "" {
 		endTimer()
-		return fmt.Errorf("empty object name")
+		return errors.New("empty object name")
 	}
 	endTimer()
 

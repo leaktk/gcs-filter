@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"time"
@@ -77,14 +76,17 @@ func (r *SplunkReporter) Report(leaks []*scanner.Leak) {
 			continue
 		}
 
-		req.Header.Add("Authorization", fmt.Sprintf("Splunk %s", r.config.Token))
+		req.Header.Add("Authorization", "Splunk "+r.config.Token)
 		resp, err := r.client.Do(req)
 
 		if err != nil {
-			logging.Error("r.client.Do: %s", err.Error())
+			logging.Error("r.client.Do: %w", err)
 			continue
 		}
-		defer resp.Body.Close()
+
+		defer func() {
+			_ = resp.Body.Close()
+		}()
 
 		respBody, err := io.ReadAll(resp.Body)
 		if err != nil {

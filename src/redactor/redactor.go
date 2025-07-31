@@ -57,7 +57,7 @@ func (r *Redactor) Redact(ctx context.Context, objectName string, object *storag
 	// a successful write
 	_, err := objectWriter.Write([]byte(notice))
 	if err != nil {
-		objectWriter.Close()
+		_ = objectWriter.Close()
 		return fmt.Errorf("objectWriter.Write: %w", err)
 	}
 
@@ -76,27 +76,11 @@ func (r *Redactor) copyToQuarantineBucket(ctx context.Context, objectName string
 
 	dest := r.quarantineBucket.Object(objectName)
 	// Don't write to the object if it already exists
-	dest.If(storage.Conditions{DoesNotExist: true})
+	dest = dest.If(storage.Conditions{DoesNotExist: true})
 
-	copyComplete := false
 	copier := dest.CopierFrom(src)
-	copier.ProgressFunc = func(copiedBytes, totalBytes uint64) {
-		if copiedBytes == totalBytes {
-			copyComplete = true
-		}
-	}
-
 	if _, err := copier.Run(ctx); err != nil {
 		return fmt.Errorf("could not copy %q: %w", objectName, err)
-	}
-
-	for {
-		if copyComplete {
-			break
-		}
-		if ctx.Err() != nil {
-			return fmt.Errorf("copy failed %q: %w", objectName, ctx.Err())
-		}
 	}
 
 	logging.Info("object quarantined: object_name=\"%v\"", objectName)

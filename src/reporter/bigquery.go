@@ -11,7 +11,7 @@ import (
 	"github.com/leaktk/gcs-filter/scanner"
 )
 
-// BigQueryReporter stores results in BigQuery for futher analysis
+// BigQueryReporter stores results in BigQuery for further analysis
 type BigQueryReporter struct {
 	client   *bigquery.Client
 	ctx      context.Context
@@ -37,7 +37,7 @@ func NewBigQueryReporter(ctx context.Context, rc *config.Reporter) (*BigQueryRep
 func (r *BigQueryReporter) Report(leaks []*scanner.Leak) {
 	endTimer := perf.Timer("ReportToBigQuery")
 	if err := r.inserter.Put(r.ctx, leaks); err != nil {
-		logging.Error("BigQuery insert failed: %w", err.Error())
+		logging.Error("BigQuery insert failed: %w", err)
 	}
 	endTimer()
 }
