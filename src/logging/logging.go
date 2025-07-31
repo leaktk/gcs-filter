@@ -4,7 +4,59 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+
+	"github.com/rs/zerolog"
+	zlog "github.com/rs/zerolog/log"
+	glog "github.com/zricethezav/gitleaks/v8/logging"
 )
+
+func init() {
+	// Disable log prefixes such as the default timestamp.
+	// Prefix text prevents the message from being parsed as JSON.
+	// A timestamp is added when shipping logs to Cloud Logging.
+	log.SetFlags(0)
+
+	// Disable logging by default to make sure that gitleaks can't produce logs
+	// without being specifically configured
+	glog.Logger.Level(zerolog.Disabled)
+
+	// Provide a custom handler to map to this logging framework
+	glog.Logger = zlog.Output(zerologMapper{})
+}
+
+// zerologMapper helps translate logs from subsystems that use zerolog
+type zerologMapper struct {
+}
+
+// Write implements an io.Writer interface
+func (m zerologMapper) Write(data []byte) (int, error) {
+	var event struct {
+		Level   string `json:"level"`
+		Message string `json:"message"`
+	}
+
+	if err := json.Unmarshal(data, &event); err != nil {
+		Error("could not decode zerolog event %w", err)
+		return 0, nil
+	}
+
+	switch event.Level {
+	case "info":
+		Info("gitleaks: %s", event.Message)
+	case "warn":
+		Warning("gitleaks: %s", event.Message)
+	case "error":
+		Error("gitleaks: %s", event.Message)
+	case "fatal":
+		Critical("gitleaks: %s", event.Message)
+	case "panic":
+		Critical("gitleaks: %s", event.Message)
+	default:
+		Debug("gitleaks: %s", event.Message)
+	}
+
+	return len(data), nil
+}
 
 // LogEntry defines a log entry for google logging
 type LogEntry struct {
@@ -30,11 +82,20 @@ func (e LogEntry) String() string {
 	return string(out)
 }
 
-func init() {
-	// Disable log prefixes such as the default timestamp.
-	// Prefix text prevents the message from being parsed as JSON.
-	// A timestamp is added when shipping logs to Cloud Logging.
-	log.SetFlags(0)
+// Debug emits an DEBUG level log
+func Debug(msg string, a ...any) {
+	log.Println(LogEntry{
+		Severity: "DEBUG",
+		Message:  fmt.Sprintf(msg, a...),
+	})
+}
+
+// Warning emits an WARNING level log
+func Warning(msg string, a ...any) {
+	log.Println(LogEntry{
+		Severity: "WARNING",
+		Message:  fmt.Sprintf(msg, a...),
+	})
 }
 
 // Info emits an INFO level log
@@ -53,10 +114,18 @@ func Error(msg string, a ...any) {
 	})
 }
 
-// Fatal emits an ERROR level log and stops the program
+// Critical emits an CRITICAL level log
+func Critical(msg string, a ...any) {
+	log.Println(LogEntry{
+		Severity: "CRITICAL",
+		Message:  fmt.Errorf(msg, a...).Error(),
+	})
+}
+
+// Fatal emits an CRITICAL level log and stops the program
 func Fatal(msg string, a ...any) {
 	log.Fatal(LogEntry{
-		Severity: "ERROR",
+		Severity: "CRITICAL",
 		Message:  fmt.Errorf(msg, a...).Error(),
 	})
 }

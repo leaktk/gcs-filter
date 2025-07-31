@@ -1,14 +1,15 @@
 package config
 
 import (
-	// Used to pull in embeded files when dist is built
+	// Used to pull in embedded files when dist is built
 	_ "embed"
 	"errors"
+	"fmt"
 	"os"
 	"strings"
 
 	"github.com/BurntSushi/toml"
-	gitleaksconfig "github.com/leaktk/gitleaks7/v2/config"
+	gitleaksconfig "github.com/zricethezav/gitleaks/v8/config"
 )
 
 // Splunk contains the config for using the Splunk reporter to log leaks
@@ -53,20 +54,6 @@ type Config struct {
 //go:embed gitleaks.toml
 var rawGitleaks string
 
-func newGitleaksConfig() (*gitleaksconfig.Config, error) {
-	var cfg gitleaksconfig.Config
-	tomlLoader := gitleaksconfig.TomlLoader{}
-
-	_, err := toml.Decode(rawGitleaks, &tomlLoader)
-
-	if err != nil {
-		return &cfg, err
-	}
-
-	cfg, err = tomlLoader.Parse()
-	return &cfg, err
-}
-
 func newRedactorConfig() (*Redactor, error) {
 	r := &Redactor{
 		Enabled:              os.Getenv("LEAKTK_GCS_FILTER_REDACTOR_ENABLED") != "false",
@@ -87,7 +74,7 @@ func newRedactorConfig() (*Redactor, error) {
 	return r, nil
 }
 
-func newReporterConfig() (*Reporter, error) {
+func newReporterConfig() *Reporter {
 	r := &Reporter{
 		Kinds: strings.Split(strings.ReplaceAll(os.Getenv("LEAKTK_GCS_FILTER_REPORTER_KINDS"), " ", ""), ","),
 	}
@@ -116,12 +103,46 @@ func newReporterConfig() (*Reporter, error) {
 		}
 	}
 
-	return r, nil
+	return r
+}
+
+func parseConfig(rawConfig string) (*gitleaksconfig.Config, error) {
+	var vc gitleaksconfig.ViperConfig
+	var cfg gitleaksconfig.Config
+	var err error
+
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("gitleaks config is invalid: %v", r)
+		}
+	}()
+
+	_, err = toml.Decode(rawConfig, &vc)
+	if err != nil {
+		return nil, err
+	}
+
+	cfg, err = vc.Translate()
+	if err != nil {
+		return nil, fmt.Errorf("error loading config: %w", err)
+	}
+
+	if len(cfg.Rules) == 0 && len(cfg.Allowlists) == 0 {
+		return nil, errors.New("invalid config: no rules or allowlists")
+	}
+
+	for _, a := range cfg.Allowlists {
+		if len(a.Paths) == 0 && len(a.Regexes) == 0 && len(a.StopWords) == 0 && len(a.Commits) == 0 {
+			return nil, errors.New("invalid config: an allowlist exists that doesn't allow anything")
+		}
+	}
+
+	return &cfg, err
 }
 
 // NewConfig loads the config for the app from memory and env vars
 func NewConfig() (*Config, error) {
-	gitleaksConfig, err := newGitleaksConfig()
+	gitleaksConfig, err := parseConfig(rawGitleaks)
 	if err != nil {
 		return nil, err
 	}
@@ -131,14 +152,9 @@ func NewConfig() (*Config, error) {
 		return nil, err
 	}
 
-	reporterConfig, err := newReporterConfig()
-	if err != nil {
-		return nil, err
-	}
-
 	return &Config{
 		Gitleaks: gitleaksConfig,
 		Redactor: redactorConfig,
-		Reporter: reporterConfig,
+		Reporter: newReporterConfig(),
 	}, nil
 }

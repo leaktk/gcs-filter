@@ -31,7 +31,7 @@ And these settings are optional (see the [Makefile](./Makefile) for defaults):
 - `LEAKTK_GCS_FILTER_TIMEOUT`: sets runtime limits for the function
 
 - `LEAKTK_PATTERN_SERVER_URL`: is the base url for pattern server
-  (`/patterns/gitleaks/7.6.1`, will be appended to it)
+  (`/patterns/gitleaks/8.18.2`, will be appended to it)
 
 - `LEAKTK_PATTERN_SERVER_CURL_FLAGS`: are curl flags for making requests to the
   pattern server

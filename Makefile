@@ -24,32 +24,37 @@ dist:
 	rm -rf dist
 	cp -r src dist
 	curl --fail $(LEAKTK_PATTERN_SERVER_CURL_FLAGS) \
-		'$(LEAKTK_PATTERN_SERVER_URL)/patterns/gitleaks/7.6.1' \
+		'$(LEAKTK_PATTERN_SERVER_URL)/patterns/gitleaks/8.18.2' \
 		| grep -vE '^\s*(#|$$)' > 'dist/config/gitleaks.toml'
+
+.PHONY: import
+import:
+	cd src && goimports -local github.com/leaktk/gcs-filter -l -w . && go mod tidy
 
 .PHONY: format
 format:
 	cd src && go fmt ./...
 
+.PHONY: vet
+vet: dist
+	cd dist && go vet ./...
+
 .PHONY: lint
-lint:
-	cd src && golint ./...
+lint: dist vet
+	cd dist && golangci-lint run
 
 .PHONY: deploy
 deploy: .env.yaml dist
 	cd dist
 	gcloud functions deploy leaktk-gcs-filter $(DEPLOY_FLAGS)
 
-.PHONY: unittest
-unittest: clean dist
-	cd dist && go test
-
 .PHONY: test
-test: lint unittest
+test: clean format vet lint dist
+	cd dist && go test
 
 .PHONY: security-report
 security-report:
-	trivy fs --scanners vuln .
+	trivy fs --scanners vuln ./src/
 
 .PHONY: update
 update:

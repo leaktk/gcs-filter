@@ -57,7 +57,7 @@ func (r *Redactor) Redact(ctx context.Context, objectName string, object *storag
 	// a successful write
 	_, err := objectWriter.Write([]byte(notice))
 	if err != nil {
-		objectWriter.Close()
+		_ = objectWriter.Close()
 		return fmt.Errorf("objectWriter.Write: %w", err)
 	}
 
@@ -90,10 +90,7 @@ func (r *Redactor) copyToQuarantineBucket(ctx context.Context, objectName string
 		return fmt.Errorf("could not copy %q: %w", objectName, err)
 	}
 
-	for {
-		if copyComplete {
-			break
-		}
+	for copyComplete {
 		if ctx.Err() != nil {
 			return fmt.Errorf("copy failed %q: %w", objectName, ctx.Err())
 		}

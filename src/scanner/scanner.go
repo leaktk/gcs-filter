@@ -1,33 +1,43 @@
 package scanner
 
 import (
-	"bufio"
 	"context"
-	"crypto/md5"
+	"crypto/md5" // #nosec G501
 	"fmt"
-	"path/filepath"
 	"time"
 
 	"cloud.google.com/go/storage"
 
-	gitleaksconfig "github.com/leaktk/gitleaks7/v2/config"
+	gitleaksconfig "github.com/zricethezav/gitleaks/v8/config"
+	"github.com/zricethezav/gitleaks/v8/detect"
+	"github.com/zricethezav/gitleaks/v8/sources"
 
 	"github.com/leaktk/gcs-filter/logging"
 )
 
-const defaultLineNumber = 1
-const bufSize = 256 * 1024
+const maxArchiveDepth = 8
+const maxDecodeDepth = 8
 
 func leakURL(bucketName, objectName string, lineNumber int) string {
 	return fmt.Sprintf("gs://%v/%v#L%d", bucketName, objectName, lineNumber)
 }
 
 func leakID(leakURL, offender string) string {
-	return fmt.Sprintf("%x", md5.Sum([]byte(leakURL+offender)))
+	return fmt.Sprintf("%x", md5.Sum([]byte(leakURL+offender))) // #nosec G401
 }
 
 func now() string {
 	return time.Now().UTC().Format(time.RFC3339)
+}
+
+func shouldSkipPath(cfg *gitleaksconfig.Config, path string) bool {
+	for _, a := range cfg.Allowlists {
+		if a.PathAllowed(path) {
+			return true
+		}
+	}
+
+	return false
 }
 
 // Scan implements a subset of a no git scan to handle an object passed in
@@ -35,94 +45,50 @@ func now() string {
 func Scan(ctx context.Context, cfg *gitleaksconfig.Config, bucketName, objectName string, object *storage.ObjectHandle) ([]*Leak, error) {
 	var leaks []*Leak
 
-	if cfg.Allowlist.PathAllowed(objectName) {
-		logging.Info("skipping because path allowed: object_name=\"%v\"", objectName)
+	if shouldSkipPath(cfg, objectName) {
+		logging.Info("skipping because path allowed: object_name=%q", objectName)
 		return leaks, nil
 	}
 
-	for _, rule := range cfg.Rules {
-		if rule.HasFileOrPathLeakOnly(objectName) {
-			url := leakURL(bucketName, objectName, defaultLineNumber)
-			offenderString := "object name offender: " + objectName
-
-			leak := Leak{
-				ID:   leakID(url, offenderString),
-				Type: "GoogleCloudStorageLeak",
-				Data: leakData{
-					AddedDate:       now(),
-					DataClasses:     rule.Tags,
-					FilePath:        objectName,
-					LeakURL:         leakURL(bucketName, objectName, defaultLineNumber),
-					Line:            "",
-					LineNumber:      defaultLineNumber,
-					Offender:        offenderString,
-					OffenderEntropy: -1,
-					Rule:            rule.Description,
-				},
-			}
-
-			leaks = append(leaks, &leak)
-		}
-	}
-
 	objectReader, err := object.NewReader(ctx)
-
 	if err != nil {
 		return leaks, fmt.Errorf("object.NewReader: %w", err)
 	}
 
-	defer objectReader.Close()
-	scanner := bufio.NewScanner(objectReader)
-	scanner.Buffer(make([]byte, bufSize), bufSize)
+	defer func() {
+		_ = objectReader.Close()
+	}()
 
-	for lineNumber := 1; scanner.Scan(); lineNumber++ {
-		line := scanner.Text()
+	detector := detect.NewDetector(*cfg)
+	detector.MaxArchiveDepth = maxArchiveDepth
+	detector.MaxDecodeDepth = maxDecodeDepth
 
-		for _, rule := range cfg.Rules {
-			if rule.AllowList.FileAllowed(filepath.Base(objectName)) ||
-				rule.AllowList.PathAllowed(objectName) {
-				continue
-			}
-
-			offender := rule.Inspect(line)
-			if offender.IsEmpty() {
-				continue
-			}
-
-			if cfg.Allowlist.RegexAllowed(line) {
-				continue
-			}
-
-			if rule.File.String() != "" && !rule.HasFileLeak(filepath.Base(objectName)) {
-				continue
-			}
-
-			if rule.Path.String() != "" && !rule.HasFilePathLeak(objectName) {
-				continue
-			}
-
-			url := leakURL(bucketName, objectName, lineNumber)
-			offenderString := offender.ToString()
-
-			leak := Leak{
-				ID:   leakID(url, offenderString),
-				Type: "GoogleCloudStorageLeak",
-				Data: leakData{
-					AddedDate:       now(),
-					DataClasses:     rule.Tags,
-					FilePath:        objectName,
-					LeakURL:         leakURL(bucketName, objectName, lineNumber),
-					Line:            line,
-					LineNumber:      lineNumber,
-					Offender:        offenderString,
-					OffenderEntropy: offender.EntropyLevel,
-					Rule:            rule.Description,
-				},
-			}
-
-			leaks = append(leaks, &leak)
-		}
+	file := &sources.File{
+		Config:          cfg,
+		Content:         objectReader,
+		MaxArchiveDepth: maxArchiveDepth,
+		Path:            objectName,
 	}
 
-	return leaks, scanner.Err()
+	findings, err := detector.DetectSource(ctx, file)
+	for _, finding := range findings {
+		url := leakURL(bucketName, objectName, finding.StartLine)
+		leaks = append(leaks, &Leak{
+			ID:   leakID(url, finding.Secret),
+			Type: "GoogleCloudStorageLeak",
+			Data: leakData{
+				AddedDate:       now(),
+				DataClasses:     finding.Tags,
+				FilePath:        objectName,
+				LeakURL:         url,
+				Line:            finding.Line,
+				LineNumber:      finding.StartLine,
+				Offender:        finding.Secret,
+				OffenderEntropy: float64(finding.Entropy),
+				Rule:            finding.Description,
+			},
+		})
+	}
+
+	return leaks, err
 }
