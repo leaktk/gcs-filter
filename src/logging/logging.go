@@ -51,8 +51,6 @@ func (m zerologMapper) Write(data []byte) (int, error) {
 		Critical("gitleaks: %s", event.Message)
 	case "panic":
 		Critical("gitleaks: %s", event.Message)
-	default:
-		Debug("gitleaks: %s", event.Message)
 	}
 
 	return len(data), nil
