@@ -9,6 +9,7 @@ require (
 	cloud.google.com/go/storage v1.49.0
 	github.com/BurntSushi/toml v1.4.0
 	github.com/GoogleCloudPlatform/functions-framework-go v1.9.0
+	github.com/cespare/xxhash/v2 v2.3.0
 	github.com/cloudevents/sdk-go/v2 v2.15.2
 	github.com/googleapis/google-cloudevents-go v0.9.0
 	github.com/rs/zerolog v1.34.0
@@ -40,7 +41,6 @@ require (
 	github.com/bodgit/sevenzip v1.6.0 // indirect
 	github.com/bodgit/windows v1.0.1 // indirect
 	github.com/census-instrumentation/opencensus-proto v0.4.1 // indirect
-	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/charmbracelet/lipgloss v0.5.0 // indirect
 	github.com/cncf/xds/go v0.0.0-20240905190251-b4127c9b8d78 // indirect
 	github.com/dsnet/compress v0.0.2-0.20230904184137-39efe44ab707 // indirect

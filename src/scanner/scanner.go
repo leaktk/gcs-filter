@@ -2,8 +2,8 @@ package scanner
 
 import (
 	"context"
-	"crypto/md5" // #nosec G501
 	"fmt"
+	"strings"
 	"time"
 
 	"cloud.google.com/go/storage"
@@ -11,6 +11,11 @@ import (
 	gitleaksconfig "github.com/zricethezav/gitleaks/v8/config"
 	"github.com/zricethezav/gitleaks/v8/detect"
 	"github.com/zricethezav/gitleaks/v8/sources"
+
+	"encoding/base64"
+	"encoding/binary"
+
+	"github.com/cespare/xxhash/v2"
 
 	"github.com/leaktk/gcs-filter/logging"
 )
@@ -22,8 +27,11 @@ func leakURL(bucketName, objectName string, lineNumber int) string {
 	return fmt.Sprintf("gs://%v/%v#L%d", bucketName, objectName, lineNumber)
 }
 
-func leakID(leakURL, offender string) string {
-	return fmt.Sprintf("%x", md5.Sum([]byte(leakURL+offender))) // #nosec G401
+func leakID(parts ...string) string {
+	data := make([]byte, 8)
+	hash := xxhash.Sum64String(strings.Join(parts, "\n"))
+	binary.BigEndian.PutUint64(data, hash)
+	return base64.RawURLEncoding.EncodeToString(data)
 }
 
 func now() string {
@@ -71,10 +79,19 @@ func Scan(ctx context.Context, cfg *gitleaksconfig.Config, bucketName, objectNam
 	}
 
 	findings, err := detector.DetectSource(ctx, file)
+	seen := make(map[string]struct{})
 	for _, finding := range findings {
 		url := leakURL(bucketName, objectName, finding.StartLine)
+		id := leakID(url, finding.Match)
+
+		// Handle duplicate findings from decoding
+		if _, alreadyCaptured := seen[id]; alreadyCaptured {
+			continue
+		}
+
+		seen[id] = struct{}{}
 		leaks = append(leaks, &Leak{
-			ID:   leakID(url, finding.Secret),
+			ID:   id,
 			Type: "GoogleCloudStorageLeak",
 			Data: leakData{
 				AddedDate:       now(),
