@@ -30,7 +30,7 @@ func (r *LoggerReporter) Report(leaks []*scanner.Leak) {
 			logging.Error("could not marshal leak result")
 			logging.Info("%v", leak)
 		} else {
-			logging.Info(string(data))
+			logging.Info("%s", string(data))
 		}
 	}
 
