@@ -77,7 +77,7 @@ func (r *SplunkReporter) Report(leaks []*scanner.Leak) {
 		}
 
 		req.Header.Add("Authorization", "Splunk "+r.config.Token)
-		resp, err := r.client.Do(req)
+		resp, err := r.client.Do(req) // #nosec G704
 
 		if err != nil {
 			logging.Error("r.client.Do: %w", err)

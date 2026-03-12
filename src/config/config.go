@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/BurntSushi/toml"
-	gitleaksconfig "github.com/zricethezav/gitleaks/v8/config"
+	betterleaksconfig "github.com/betterleaks/betterleaks/config"
 )
 
 // Splunk contains the config for using the Splunk reporter to log leaks
@@ -46,13 +46,13 @@ type Redactor struct {
 
 // Config contains all of the config for the app
 type Config struct {
-	Gitleaks *gitleaksconfig.Config
-	Redactor *Redactor
-	Reporter *Reporter
+	Betterleaks *betterleaksconfig.Config
+	Redactor    *Redactor
+	Reporter    *Reporter
 }
 
 //go:embed gitleaks.toml
-var rawGitleaks string
+var rawBetterleaks string
 
 func newRedactorConfig() (*Redactor, error) {
 	r := &Redactor{
@@ -106,14 +106,14 @@ func newReporterConfig() *Reporter {
 	return r
 }
 
-func parseConfig(rawConfig string) (*gitleaksconfig.Config, error) {
-	var vc gitleaksconfig.ViperConfig
-	var cfg gitleaksconfig.Config
+func parseConfig(rawConfig string) (*betterleaksconfig.Config, error) {
+	var vc betterleaksconfig.ViperConfig
+	var cfg betterleaksconfig.Config
 	var err error
 
 	defer func() {
 		if r := recover(); r != nil {
-			err = fmt.Errorf("gitleaks config is invalid: %v", r)
+			err = fmt.Errorf("betterleaks config is invalid: %v", r)
 		}
 	}()
 
@@ -142,7 +142,7 @@ func parseConfig(rawConfig string) (*gitleaksconfig.Config, error) {
 
 // NewConfig loads the config for the app from memory and env vars
 func NewConfig() (*Config, error) {
-	gitleaksConfig, err := parseConfig(rawGitleaks)
+	betterleaksConfig, err := parseConfig(rawBetterleaks)
 	if err != nil {
 		return nil, err
 	}
@@ -153,8 +153,8 @@ func NewConfig() (*Config, error) {
 	}
 
 	return &Config{
-		Gitleaks: gitleaksConfig,
-		Redactor: redactorConfig,
-		Reporter: newReporterConfig(),
+		Betterleaks: betterleaksConfig,
+		Redactor:    redactorConfig,
+		Reporter:    newReporterConfig(),
 	}, nil
 }

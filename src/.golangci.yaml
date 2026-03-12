@@ -44,7 +44,7 @@ linters:
     - whitespace
     - wrapcheck
     - wsl
-    - zerologlint  # doesn't seem to catch gitleaks/v8/logging mistakes
+    - zerologlint  # doesn't seem to catch betterleaks/logging mistakes
   enable:
     - errcheck
     - exhaustruct

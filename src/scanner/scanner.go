@@ -8,9 +8,9 @@ import (
 
 	"cloud.google.com/go/storage"
 
-	gitleaksconfig "github.com/zricethezav/gitleaks/v8/config"
-	"github.com/zricethezav/gitleaks/v8/detect"
-	"github.com/zricethezav/gitleaks/v8/sources"
+	betterleaksconfig "github.com/betterleaks/betterleaks/config"
+	"github.com/betterleaks/betterleaks/detect"
+	"github.com/betterleaks/betterleaks/sources"
 
 	"encoding/base64"
 	"encoding/binary"
@@ -38,7 +38,7 @@ func now() string {
 	return time.Now().UTC().Format(time.RFC3339)
 }
 
-func shouldSkipPath(cfg *gitleaksconfig.Config, path string) bool {
+func shouldSkipPath(cfg *betterleaksconfig.Config, path string) bool {
 	for _, a := range cfg.Allowlists {
 		if a.PathAllowed(path) {
 			return true
@@ -49,8 +49,7 @@ func shouldSkipPath(cfg *gitleaksconfig.Config, path string) bool {
 }
 
 // Scan implements a subset of a no git scan to handle an object passed in
-// Source: https://github.com/leaktk/gitleaks7/blob/main/scan/nogit.go
-func Scan(ctx context.Context, cfg *gitleaksconfig.Config, bucketName, objectName string, object *storage.ObjectHandle) ([]*Leak, error) {
+func Scan(ctx context.Context, cfg *betterleaksconfig.Config, bucketName, objectName string, object *storage.ObjectHandle) ([]*Leak, error) {
 	var leaks []*Leak
 
 	if shouldSkipPath(cfg, objectName) {

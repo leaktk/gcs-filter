@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"log"
 
+	glog "github.com/betterleaks/betterleaks/logging"
 	"github.com/rs/zerolog"
 	zlog "github.com/rs/zerolog/log"
-	glog "github.com/zricethezav/gitleaks/v8/logging"
 )
 
 func init() {
@@ -16,7 +16,7 @@ func init() {
 	// A timestamp is added when shipping logs to Cloud Logging.
 	log.SetFlags(0)
 
-	// Disable logging by default to make sure that gitleaks can't produce logs
+	// Disable logging by default to make sure that betterleaks can't produce logs
 	// without being specifically configured
 	glog.Logger.Level(zerolog.Disabled)
 
@@ -42,15 +42,15 @@ func (m zerologMapper) Write(data []byte) (int, error) {
 
 	switch event.Level {
 	case "info":
-		Info("gitleaks: %s", event.Message)
+		Info("betterleaks: %s", event.Message)
 	case "warn":
-		Warning("gitleaks: %s", event.Message)
+		Warning("betterleaks: %s", event.Message)
 	case "error":
-		Error("gitleaks: %s", event.Message)
+		Error("betterleaks: %s", event.Message)
 	case "fatal":
-		Critical("gitleaks: %s", event.Message)
+		Critical("betterleaks: %s", event.Message)
 	case "panic":
-		Critical("gitleaks: %s", event.Message)
+		Critical("betterleaks: %s", event.Message)
 	}
 
 	return len(data), nil

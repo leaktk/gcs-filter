@@ -53,6 +53,8 @@ unittest: dist
 	cd dist && go test
 
 .PHONY: test
+# Force the pattern server URL for the tests
+test: LEAKTK_PATTERN_SERVER_URL = https://raw.githubusercontent.com/leaktk/patterns/main/target
 test: clean format vet lint unittest
 
 .PHONY: security-report
