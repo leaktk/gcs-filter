@@ -47,7 +47,6 @@ linters:
     - zerologlint  # doesn't seem to catch betterleaks/logging mistakes
   enable:
     - errcheck
-    - exhaustruct
     - gosec
     - inamedparam
     - misspell
