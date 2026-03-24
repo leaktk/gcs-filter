@@ -66,7 +66,7 @@ func Scan(ctx context.Context, cfg *betterleaksconfig.Config, bucketName, object
 		_ = objectReader.Close()
 	}()
 
-	detector := detect.NewDetector(*cfg)
+	detector := detect.NewDetectorContext(ctx, *cfg)
 	detector.MaxArchiveDepth = maxArchiveDepth
 	detector.MaxDecodeDepth = maxDecodeDepth
 
