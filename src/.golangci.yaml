@@ -44,13 +44,12 @@ linters:
     - whitespace
     - wrapcheck
     - wsl
-    - zerologlint  # doesn't seem to catch betterleaks/logging mistakes
+    - zerologlint  # doesn't seem to catch gitleaks/v8/logging mistakes
   enable:
     - errcheck
     - gosec
     - inamedparam
     - misspell
-    - nonamedreturns
     - perfsprint
     - revive
     - staticcheck
@@ -78,4 +77,4 @@ formatters:
   settings:
     goimports:
       local-prefixes:
-        - github.com/leaktk/scanner
+        - github.com/leaktk/gcs-filter
