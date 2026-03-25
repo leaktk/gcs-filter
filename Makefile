@@ -4,6 +4,7 @@ LEAKTK_GCS_FILTER_CPU ?= 2
 LEAKTK_GCS_FILTER_MEMORY ?= 256Mi
 LEAKTK_GCS_FILTER_TIMEOUT ?= 5s
 LEAKTK_PATTERN_SERVER_URL ?= https://raw.githubusercontent.com/leaktk/patterns/main/target
+LEAKTK_PATTERNS_GITLEAKS_VERSION ?= 8.27.0
 
 # Build the deploy flags
 DEPLOY_FLAGS := --gen2 --runtime=go125 --region=$(LEAKTK_GCS_FILTER_REGION)
@@ -24,7 +25,7 @@ dist:
 	rm -rf dist
 	cp -r src dist
 	curl --fail $(LEAKTK_PATTERN_SERVER_CURL_FLAGS) \
-		'$(LEAKTK_PATTERN_SERVER_URL)/patterns/gitleaks/8.18.2' \
+		'$(LEAKTK_PATTERN_SERVER_URL)/patterns/gitleaks/$(LEAKTK_PATTERNS_GITLEAKS_VERSION)' \
 		| grep -vE '^\s*(#|$$)' > 'dist/config/gitleaks.toml'
 
 .PHONY: import
