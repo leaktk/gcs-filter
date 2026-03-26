@@ -86,7 +86,7 @@ func analyzeObject(ctx context.Context, e event.Event) error {
 	endTimer = perf.Timer("ScanObject")
 	logging.Info("starting analysis: object_name=\"%v\"", objectName)
 	object := storageClient.Bucket(bucketName).Object(objectName)
-	leaks, err := scanner.Scan(ctx, cfg.Gitleaks, bucketName, objectName, object)
+	leaks, err := scanner.Scan(ctx, cfg.Betterleaks, bucketName, objectName, object)
 	if err != nil {
 		logging.Error("scanner.Scan: %w", err)
 	}
