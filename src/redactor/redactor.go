@@ -13,21 +13,28 @@ import (
 	"github.com/leaktk/gcs-filter/perf"
 )
 
-const notice = "This file contained potentially sensitive information and has been removed.\n"
+const defaultNotice = "This file contained potentially sensitive information and has been removed.\n"
 
 // Redactor removes objects from the bucket and optionally quarantines them
 type Redactor struct {
 	Enabled          bool
 	quarantine       bool
 	quarantineBucket *storage.BucketHandle
+	notice           string
 }
 
 // NewRedactor returns a configured pointer to a Redactor struct
 func NewRedactor(rc *config.Redactor, storageClient *storage.Client) *Redactor {
+	notice := defaultNotice
+	if rc.QuarantineNotice != "" {
+		notice = rc.QuarantineNotice + "\n"
+	}
+
 	return &Redactor{
 		Enabled:          rc.Enabled,
 		quarantine:       rc.Quarantine,
 		quarantineBucket: storageClient.Bucket(rc.QuarantineBucketName),
+		notice:           notice,
 	}
 }
 
@@ -55,7 +62,7 @@ func (r *Redactor) Redact(ctx context.Context, objectName string, object *storag
 
 	// Close not deferred because we want to know if it errors out after
 	// a successful write
-	_, err := objectWriter.Write([]byte(notice))
+	_, err := objectWriter.Write([]byte(r.notice))
 	if err != nil {
 		_ = objectWriter.Close()
 		return fmt.Errorf("objectWriter.Write: %w", err)
