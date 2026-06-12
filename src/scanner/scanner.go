@@ -95,7 +95,7 @@ func Scan(ctx context.Context, cfg *betterleaksconfig.Config, bucketName, object
 			Data: leakData{
 				AddedDate:       now(),
 				DataClasses:     finding.Tags,
-				FilePath:        objectName,
+				FilePath:        finding.File,
 				LeakURL:         url,
 				Line:            finding.Line,
 				LineNumber:      finding.StartLine,
