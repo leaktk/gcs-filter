@@ -51,6 +51,12 @@ Redactor settings:
   up files containing leaks to the the bucket defined by
   `LEAKTK_GCS_FILTER_REDACTOR_QUARANTINE_BUCKET_NAME`
 
+Optional Redactor settings:
+
+- `LEAKTK_GCS_FILTER_REDACTOR_QUARANTINE_NOTICE` (default: ""): If set, overrides
+  the default redaction notice with a custom message. Use this to point users
+  toward internal documentation or a contact for accessing redacted files.
+
 Required settings if quarantine is enabled:
 
 - `LEAKTK_GCS_FILTER_REDACTOR_QUARANTINE_BUCKET_NAME`: This defines the bucket

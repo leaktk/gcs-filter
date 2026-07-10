@@ -42,6 +42,7 @@ type Redactor struct {
 	Enabled              bool
 	Quarantine           bool
 	QuarantineBucketName string
+	QuarantineNotice     string
 }
 
 // Config contains all of the config for the app
@@ -59,6 +60,7 @@ func newRedactorConfig() (*Redactor, error) {
 		Enabled:              os.Getenv("LEAKTK_GCS_FILTER_REDACTOR_ENABLED") != "false",
 		Quarantine:           os.Getenv("LEAKTK_GCS_FILTER_REDACTOR_QUARANTINE") == "true",
 		QuarantineBucketName: os.Getenv("LEAKTK_GCS_FILTER_REDACTOR_QUARANTINE_BUCKET_NAME"),
+		QuarantineNotice:     os.Getenv("LEAKTK_GCS_FILTER_REDACTOR_QUARANTINE_NOTICE"),
 	}
 
 	if r.Quarantine {
