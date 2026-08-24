@@ -30,27 +30,28 @@ dist:
 
 .PHONY: import
 import:
-	env -C src goimports -local github.com/leaktk/gcs-filter -l -w . && go mod tidy
+	cd src && goimports -local github.com/leaktk/gcs-filter -l -w . && go mod tidy
 
 .PHONY: format
 format:
-	env -C src go fmt ./...
+	cd src && go fmt ./...
 
 .PHONY: vet
 vet: dist
-	env -C dist go vet ./...
+	cd dist && go vet ./...
 
 .PHONY: lint
 lint: dist vet
-	env -C dist golangci-lint run
+	cd dist && golangci-lint run
 
 .PHONY: deploy
 deploy: .env.yaml dist
-	env -C dist gcloud functions deploy leaktk-gcs-filter $(DEPLOY_FLAGS)
+	cd dist
+	gcloud functions deploy leaktk-gcs-filter $(DEPLOY_FLAGS)
 
 .PHONY: unittest
 unittest: dist
-	env -C dist go test
+	cd dist && go test
 
 .PHONY: test
 # Force the pattern server URL for the tests
@@ -63,4 +64,4 @@ security-report:
 
 .PHONY: update
 update:
-	env -C src go get -u ./... && go mod tidy
+	cd src && go get -u ./... && go mod tidy
