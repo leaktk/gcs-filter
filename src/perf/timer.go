@@ -14,6 +14,6 @@ func Timer(name string) func() {
 
 	return func() {
 		end := time.Now()
-		logging.Info("%sTimer: end=%d duration=%v", name, end.Now(), end.Sub(start))
+		logging.Info("%sTimer: end=%d duration=%v", name, end.Unix(), end.Sub(start))
 	}
 }

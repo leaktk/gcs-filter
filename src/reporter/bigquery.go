@@ -37,7 +37,7 @@ func NewBigQueryReporter(ctx context.Context, rc *config.Reporter) (*BigQueryRep
 func (r *BigQueryReporter) Report(leaks []*scanner.Leak) {
 	endTimer := perf.Timer("ReportToBigQuery")
 	if err := r.inserter.Put(r.ctx, leaks); err != nil {
-		logging.Error("BigQuery insert failed: %w", err)
+		logging.Error("BigQuery insert failed: %v", err)
 	}
 	endTimer()
 }

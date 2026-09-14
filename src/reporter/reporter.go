@@ -25,7 +25,7 @@ func reporterFromKind(ctx context.Context, kind string, rc *config.Reporter) (Re
 	case "BigQuery":
 		return NewBigQueryReporter(ctx, rc)
 	default:
-		return nil, fmt.Errorf("unsuported reporter: kind=\"%v\"", kind)
+		return nil, fmt.Errorf("unsuported reporter: kind=%q", kind)
 	}
 }
 
@@ -42,7 +42,7 @@ func NewReporter(ctx context.Context, rc *config.Reporter) (Reporter, error) {
 		rptr, err := reporterFromKind(ctx, kind, rc)
 
 		if err != nil {
-			logging.Error("skipping reporter: kind=\"%s\" err=%w", kind, err)
+			logging.Error("skipping reporter: kind=%q err=%v", kind, err)
 		} else {
 			reporters = append(reporters, rptr)
 		}

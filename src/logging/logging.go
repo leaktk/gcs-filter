@@ -36,7 +36,7 @@ func (m zerologMapper) Write(data []byte) (int, error) {
 	}
 
 	if err := json.Unmarshal(data, &event); err != nil {
-		Error("could not decode zerolog event %w", err)
+		Error("could not decode zerolog event %v", err)
 		return 0, nil
 	}
 

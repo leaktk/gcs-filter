@@ -49,7 +49,7 @@ func (r *Redactor) Redact(ctx context.Context, objectName string, object *storag
 		}
 	}
 
-	logging.Info("removing object content: object_name=\"%v\"", objectName)
+	logging.Info("removing object content: object_name=%q", objectName)
 	objectWriter := object.NewWriter(ctx)
 	objectWriter.ContentType = "text/plain"
 
@@ -66,13 +66,13 @@ func (r *Redactor) Redact(ctx context.Context, objectName string, object *storag
 		return fmt.Errorf("objectWriter.Close: %w", err)
 	}
 
-	logging.Info("object content removed: object_name=\"%v\"", objectName)
+	logging.Info("object content removed: object_name=%q", objectName)
 	endTimer()
 	return nil
 }
 
 func (r *Redactor) copyToQuarantineBucket(ctx context.Context, objectName string, src *storage.ObjectHandle) error {
-	logging.Info("quarantining object: object_name=\"%v\"", objectName)
+	logging.Info("quarantining object: object_name=%q", objectName)
 
 	dest := r.quarantineBucket.Object(objectName)
 	// Don't write to the object if it already exists
@@ -80,9 +80,9 @@ func (r *Redactor) copyToQuarantineBucket(ctx context.Context, objectName string
 
 	copier := dest.CopierFrom(src)
 	if _, err := copier.Run(ctx); err != nil {
-		return fmt.Errorf("could not copy %q: %w", objectName, err)
+		return fmt.Errorf("could not copy object: %w", err)
 	}
 
-	logging.Info("object quarantined: object_name=\"%v\"", objectName)
+	logging.Info("object quarantined: object_name=%q", objectName)
 	return nil
 }

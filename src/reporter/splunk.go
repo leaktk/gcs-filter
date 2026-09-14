@@ -62,7 +62,7 @@ func (r *SplunkReporter) Report(leaks []*scanner.Leak) {
 
 			body, err := json.Marshal(payload)
 			if err != nil {
-				logging.Error("json.Marshal: %w", err)
+				logging.Error("json.Marshal: %v", err)
 				continue
 			}
 
@@ -72,7 +72,7 @@ func (r *SplunkReporter) Report(leaks []*scanner.Leak) {
 
 		req, err := http.NewRequest("POST", r.config.Collector, bytes.NewReader(events.Bytes()))
 		if err != nil {
-			logging.Error("http.Request: %w", err)
+			logging.Error("http.Request: %v", err)
 			continue
 		}
 
@@ -80,7 +80,7 @@ func (r *SplunkReporter) Report(leaks []*scanner.Leak) {
 		resp, err := r.client.Do(req) // #nosec G704
 
 		if err != nil {
-			logging.Error("r.client.Do: %w", err)
+			logging.Error("r.client.Do: %v", err)
 			continue
 		}
 
@@ -90,14 +90,14 @@ func (r *SplunkReporter) Report(leaks []*scanner.Leak) {
 
 		respBody, err := io.ReadAll(resp.Body)
 		if err != nil {
-			logging.Error("io.ReadAll(resp.Body): %w", err)
+			logging.Error("io.ReadAll(resp.Body): %v", err)
 			continue
 		}
 
 		if resp.StatusCode >= 400 {
-			logging.Error("splunk response: status_code=%d resp=\"%s\"", resp.StatusCode, string(respBody))
+			logging.Error("splunk response: status_code=%d resp=%q", resp.StatusCode, string(respBody))
 		} else {
-			logging.Info("splunk response: status_code=%d resp=\"%s\"", resp.StatusCode, string(respBody))
+			logging.Info("splunk response: status_code=%d resp=%q", resp.StatusCode, string(respBody))
 		}
 	}
 
