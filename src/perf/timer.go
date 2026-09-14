@@ -10,8 +10,10 @@ import (
 // "name" should be formatted LikeAClassName
 func Timer(name string) func() {
 	start := time.Now()
+	logging.Info("%sTimer: start=%d", name, start.Unix())
 
 	return func() {
-		logging.Info("%sTimer: duration=%v", name, time.Since(start))
+		end := time.Now()
+		logging.Info("%sTimer: end=%d duration=%v", name, end.Now(), end.Sub(start))
 	}
 }
