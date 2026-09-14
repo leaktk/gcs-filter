@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 
+	"cloud.google.com/go/profiler"
 	"cloud.google.com/go/storage"
 	"github.com/GoogleCloudPlatform/functions-framework-go/functions"
 	"github.com/cloudevents/sdk-go/v2/event"
@@ -28,10 +30,22 @@ var unmarshaller protojson.UnmarshalOptions
 func init() {
 	var err error
 
+	// disable tiktoken checks in betterleaks
+	if err = os.Setenv("BETTERLEAKS_NO_BPE_CHECK", "1"); err != nil {
+		logging.Fatal("os.Setenv: %v", err)
+	}
+
 	// Load the config
 	cfg, err = config.NewConfig()
 	if err != nil {
-		logging.Fatal("config.NewConfig: %s", err.Error())
+		logging.Fatal("config.NewConfig: %v", err)
+	}
+
+	// setup profiler
+	if v := os.Getenv("LEAKTK_GCS_FILTER_ENABLE_PROFILER"); len(v) > 0 && v != "0" {
+		if err := profiler.Start(cfg.Profiler); err != nil {
+			logging.Fatal("profiler.Start: %v", err)
+		}
 	}
 
 	// Create a context for services to use
@@ -40,13 +54,13 @@ func init() {
 	// Setup the reporter
 	leakReporter, err = reporter.NewReporter(ctx, cfg.Reporter)
 	if err != nil {
-		logging.Fatal("reporter.NewReporter: %w", err)
+		logging.Fatal("reporter.NewReporter: %v", err)
 	}
 
 	// Setup the storage client
 	storageClient, err = storage.NewClient(ctx)
 	if err != nil {
-		logging.Fatal("storage.NewClient: %w", err)
+		logging.Fatal("storage.NewClient: %v", err)
 	}
 
 	// Setup the redactor
@@ -84,15 +98,15 @@ func analyzeObject(ctx context.Context, e event.Event) error {
 	endTimer()
 
 	endTimer = perf.Timer("ScanObject")
-	logging.Info("starting analysis: object_name=\"%v\"", objectName)
+	logging.Info("starting analysis: object_name=%q", objectName)
 	object := storageClient.Bucket(bucketName).Object(objectName)
 	leaks, err := scanner.Scan(ctx, cfg.Betterleaks, bucketName, objectName, object)
 	if err != nil {
-		logging.Error("scanner.Scan: %w", err)
+		logging.Error("scanner.Scan: %v object_name=%q", err, objectName)
 	}
 
-	logging.Info("scan details: leak_count=%d object_name=\"%v\"", len(leaks), objectName)
 	if len(leaks) == 0 {
+		logging.Info("scan details: leak_count=%d has_prod_secret=false object_name=%q", len(leaks), objectName)
 		endTimer()
 		// nothing else to do here
 		return nil
@@ -107,12 +121,14 @@ func analyzeObject(ctx context.Context, e event.Event) error {
 			break
 		}
 	}
+	logging.Info("scan details: leak_count=%d has_prod_secret=%v object_name=%q", len(leaks), leakFound, objectName)
 	endTimer()
 
 	if leakRedactor.Enabled && leakFound {
 		err = leakRedactor.Redact(ctx, objectName, object)
 
 		if err != nil {
+			logging.Error("leakRedactor.Redact: %v object_name=%q", err, objectName)
 			return err
 		}
 	}

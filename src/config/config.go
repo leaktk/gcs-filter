@@ -8,6 +8,7 @@ import (
 	"os"
 	"strings"
 
+	"cloud.google.com/go/profiler"
 	"github.com/BurntSushi/toml"
 	betterleaksconfig "github.com/betterleaks/betterleaks/config"
 )
@@ -49,6 +50,7 @@ type Config struct {
 	Betterleaks *betterleaksconfig.Config
 	Redactor    *Redactor
 	Reporter    *Reporter
+	Profiler    profiler.Config
 }
 
 //go:embed gitleaks.toml
@@ -156,5 +158,9 @@ func NewConfig() (*Config, error) {
 		Betterleaks: betterleaksConfig,
 		Redactor:    redactorConfig,
 		Reporter:    newReporterConfig(),
+		Profiler: profiler.Config{
+			Service:        "leaktk-gcs-filter",
+			ServiceVersion: "1.0.0",
+		},
 	}, nil
 }

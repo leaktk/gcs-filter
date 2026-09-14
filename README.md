@@ -24,11 +24,17 @@ And these settings are optional (see the [Makefile](./Makefile) for defaults):
 - `LEAKTK_GCS_FILTER_CONCURRENCY`: is how many connections a single instance
   should allow at once
 
+- `LEAKTK_GCS_FILTER_MAX_INSTANCES`: sets the max number of instances that can be
+  spun up.
+
 - `LEAKTK_GCS_FILTER_CPU`: sets the CPU limits for the function
 
 - `LEAKTK_GCS_FILTER_MEMORY`: sets the memory limits for the function
 
 - `LEAKTK_GCS_FILTER_TIMEOUT`: sets runtime limits for the function
+
+- `LEAKTK_GCS_FILTER_ENABLE_PROFILER`: if set to any value other than 0, it
+  enables a [profiler](https://docs.cloud.google.com/profiler/docs/profiling-go).
 
 - `LEAKTK_PATTERN_SERVER_URL`: is the base url for pattern server
   (`/patterns/gitleaks/8.18.2`, will be appended to it)

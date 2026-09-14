@@ -1,18 +1,22 @@
 # Default Settings
-LEAKTK_GCS_FILTER_CONCURRENCY ?= 10
+LEAKTK_GCS_FILTER_CONCURRENCY ?= 16
+LEAKTK_GCS_FILTER_MAX_INSTANCES ?= 16
 LEAKTK_GCS_FILTER_CPU ?= 2
 LEAKTK_GCS_FILTER_MEMORY ?= 256Mi
 LEAKTK_GCS_FILTER_TIMEOUT ?= 5s
 LEAKTK_PATTERN_SERVER_URL ?= https://raw.githubusercontent.com/leaktk/patterns/main/target
 LEAKTK_PATTERNS_GITLEAKS_VERSION ?= 8.27.0
 
+GO_VERSION ?= $(shell grep -Po '^go\s+\K\d+\.\d+' src/go.mod | tr -d '.' | sed 's/^/go/')
+
 # Build the deploy flags
-DEPLOY_FLAGS := --gen2 --runtime=go125 --region=$(LEAKTK_GCS_FILTER_REGION)
+DEPLOY_FLAGS := --gen2 --runtime=$(GO_VERSION) --region=$(LEAKTK_GCS_FILTER_REGION)
 DEPLOY_FLAGS += --source=dist --entry-point=AnalyzeObject
 DEPLOY_FLAGS += --trigger-bucket=$(LEAKTK_GCS_FILTER_TRIGGER_BUCKET) --project=$(LEAKTK_GCS_FILTER_PROJECT)
 DEPLOY_FLAGS += --cpu=$(LEAKTK_GCS_FILTER_CPU) --memory=$(LEAKTK_GCS_FILTER_MEMORY)
 DEPLOY_FLAGS += --concurrency=$(LEAKTK_GCS_FILTER_CONCURRENCY) --timeout=$(LEAKTK_GCS_FILTER_TIMEOUT)
 DEPLOY_FLAGS += --env-vars-file=.env.yaml
+DEPLOY_FLAGS += --max-instances=$(LEAKTK_GCS_FILTER_MAX_INSTANCES)
 
 .PHONY: clean
 clean:
