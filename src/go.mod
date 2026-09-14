@@ -16,6 +16,8 @@ require (
 	google.golang.org/protobuf v1.36.12
 )
 
+replace github.com/betterleaks/betterleaks => github.com/leaktk/betterleaks v1.1.1-nobpe
+
 require (
 	cel.dev/expr v0.25.2 // indirect
 	cloud.google.com/go v0.123.0 // indirect

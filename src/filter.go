@@ -30,10 +30,15 @@ var unmarshaller protojson.UnmarshalOptions
 func init() {
 	var err error
 
+	// disable tiktoken checks in betterleaks
+	if err = os.Setenv("BETTERLEAKS_NO_BPE_CHECK", "1"); err != nil {
+		logging.Fatal("os.Setenv: %v", err)
+	}
+
 	// Load the config
 	cfg, err = config.NewConfig()
 	if err != nil {
-		logging.Fatal("config.NewConfig: %s", err.Error())
+		logging.Fatal("config.NewConfig: %v", err)
 	}
 
 	// setup profiler
