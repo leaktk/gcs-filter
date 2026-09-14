@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 
+	"cloud.google.com/go/profiler"
 	"cloud.google.com/go/storage"
 	"github.com/GoogleCloudPlatform/functions-framework-go/functions"
 	"github.com/cloudevents/sdk-go/v2/event"
@@ -32,6 +34,13 @@ func init() {
 	cfg, err = config.NewConfig()
 	if err != nil {
 		logging.Fatal("config.NewConfig: %s", err.Error())
+	}
+
+	// setup profiler
+	if v := os.Getenv("LEAKTK_GCS_FILTER_ENABLE_PROFILER"); len(v) > 0 && v != "0" {
+		if err := profiler.Start(cfg.Profiler); err != nil {
+			logging.Fatal("profiler.Start: %v", err)
+		}
 	}
 
 	// Create a context for services to use

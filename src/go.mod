@@ -4,6 +4,7 @@ go 1.26.8
 
 require (
 	cloud.google.com/go/bigquery v1.77.0
+	cloud.google.com/go/profiler v0.6.0
 	cloud.google.com/go/storage v1.62.3
 	github.com/BurntSushi/toml v1.6.0
 	github.com/GoogleCloudPlatform/functions-framework-go v1.9.2
@@ -61,6 +62,7 @@ require (
 	github.com/goccy/go-json v0.10.6 // indirect
 	github.com/google/cel-go v0.29.0 // indirect
 	github.com/google/flatbuffers v25.12.19+incompatible // indirect
+	github.com/google/pprof v0.0.0-20260402051712-545e8a4df936 // indirect
 	github.com/google/s2a-go v0.1.9 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.17 // indirect

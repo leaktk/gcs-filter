@@ -33,6 +33,9 @@ And these settings are optional (see the [Makefile](./Makefile) for defaults):
 
 - `LEAKTK_GCS_FILTER_TIMEOUT`: sets runtime limits for the function
 
+- `LEAKTK_GCS_FILTER_ENABLE_PROFILER`: if set to any value other than 0, it
+  enables a [profiler](https://docs.cloud.google.com/profiler/docs/profiling-go).
+
 - `LEAKTK_PATTERN_SERVER_URL`: is the base url for pattern server
   (`/patterns/gitleaks/8.18.2`, will be appended to it)
 
