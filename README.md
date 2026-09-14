@@ -24,6 +24,9 @@ And these settings are optional (see the [Makefile](./Makefile) for defaults):
 - `LEAKTK_GCS_FILTER_CONCURRENCY`: is how many connections a single instance
   should allow at once
 
+- `LEAKTK_GCS_FILTER_MAX_INSTANCES`: sets the max number of instances that can be
+  spun up.
+
 - `LEAKTK_GCS_FILTER_CPU`: sets the CPU limits for the function
 
 - `LEAKTK_GCS_FILTER_MEMORY`: sets the memory limits for the function
