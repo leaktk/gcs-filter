@@ -13,6 +13,18 @@ import (
 	betterleaksconfig "github.com/betterleaks/betterleaks/config"
 )
 
+const (
+	TrueMetadataValue  string = "1"
+	FalseMetadataValue string = "0"
+)
+
+// For object downloads using Reader, metadata keys are sent as headers.
+// Therefore, avoid setting metadata keys using characters that are not valid
+// for headers. See https://www.rfc-editor.org/rfc/rfc7230#section-3.2.6.
+const (
+	RedactedMetadataKey string = "leaktk-redacted"
+)
+
 // Splunk contains the config for using the Splunk reporter to log leaks
 type Splunk struct {
 	Collector  string
