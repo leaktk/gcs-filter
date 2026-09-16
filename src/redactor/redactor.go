@@ -52,6 +52,9 @@ func (r *Redactor) Redact(ctx context.Context, objectName string, object *storag
 	logging.Info("removing object content: object_name=%q", objectName)
 	objectWriter := object.NewWriter(ctx)
 	objectWriter.ContentType = "text/plain"
+	objectWriter.Metadata = map[string]string{
+		config.RedactedMetadataKey: config.TrueMetadataValue,
+	}
 
 	// Close not deferred because we want to know if it errors out after
 	// a successful write

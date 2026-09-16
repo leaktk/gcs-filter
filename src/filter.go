@@ -97,6 +97,12 @@ func analyzeObject(ctx context.Context, e event.Event) error {
 	}
 	endTimer()
 
+	// Skip things already redacted objects
+	if data.Metadata != nil && data.Metadata[config.RedactedMetadataKey] == config.TrueMetadataValue {
+		logging.Info("skipping already redacted object: object_name=%q", objectName)
+		return nil
+	}
+
 	endTimer = perf.Timer("ScanObject")
 	logging.Info("starting analysis: object_name=%q", objectName)
 	object := storageClient.Bucket(bucketName).Object(objectName)
