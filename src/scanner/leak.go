@@ -30,8 +30,7 @@ func (l *Leak) IsProductionSecretRule() bool {
 		if !isSecret && tag == "type:secret" {
 			isSecret = true
 		}
-
-		if !isTesting && tag == "group:leaktk-testing" {
+		if !isTesting && tag == "grp:test" {
 			isTesting = true
 		}
 	}
